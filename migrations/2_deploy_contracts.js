@@ -3,7 +3,7 @@ var Token = artifacts.require("./CrowdsaleToken.sol");
 var PricingStartegy = artifacts.require("./EthTranchePricing.sol");
 //var MultisigWallet = artifacts.require("./MultisigWalletConsenSys.sol");
 var MultisigWallet = artifacts.require("./MultisigWallet.sol");
-var Crowdsale = artifacts.require("./MintedTokenCappedCrowdsale.sol");
+var Crowdsale = artifacts.require("./MintedEthCappedCrowdsale.sol");
 var FinalizeAgent = artifacts.require("./BonusFinalizeAgent.sol");
 var SafeMathLib = artifacts.require("./SafeMathLib.sol");
 
@@ -36,11 +36,25 @@ module.exports = function(deployer, network, accounts) {
      * Here you can chose your token name, symbol, initial supply & decimals etc.
      */
 
-    var _tokenName = "TOSHCOINN";
-    var _tokenSymbol = "TOSH";
+    var _tokenName = "FEED";
+    var _tokenSymbol = "FDT";
     var _tokenDecimals = 8;
     var _tokenInitialSupply = tokenInSmallestUnit(0, _tokenDecimals);
     var _tokenMintable = true;
+
+
+    /**
+     * Crowdsale parameters
+     * =====================================
+     * Here you will set your MultiSigWallet parameters where you will be collecting the contributed ethers
+     * here you have to mention the list of wallet owners (none of them must be 0)
+     * and the minimum approvals required to approve the transactions.
+     */
+    var _startTime = getUnixTimestamp('2017-06-10 15:40:00 GMT');
+    var _endTime = getUnixTimestamp('2017-06-10 16:40:00 GMT');
+    var _minimumFundingGoal = etherInWei(1000);
+    var _cap = etherInWei(10000);
+
 
     /**
      * Pricing tranches for pricing strategy 
@@ -59,12 +73,11 @@ module.exports = function(deployer, network, accounts) {
      * then this situation will not arise. 
      */
     var _tranches = [
-        etherInWei(0), tokensPerEther(1500),
-        etherInWei(5), tokensPerEther(1300),
-        etherInWei(10), tokensPerEther(1100),
-        etherInWei(15), tokensPerEther(1050),
-        etherInWei(20), tokensPerEther(1000),
-        etherInWei(300), tokensPerEther(0)
+        etherInWei(0), tokensPerEther(10000),
+        etherInWei(1000), tokensPerEther(9000),
+        etherInWei(3000), tokensPerEther(8000),
+        etherInWei(6000), tokensPerEther(7000),
+        _cap, tokensPerEther(0)
     ];
 
     /**
@@ -75,7 +88,10 @@ module.exports = function(deployer, network, accounts) {
      * and the minimum approvals required to approve the transactions.
      */
     var _minRequired = 2;
-    var _dayLimit = 2;
+
+    // No minimum ethers can be withdraw 
+    // without approval from members
+    var _dayLimit = 0;
     var _listOfOwners;
     if (network == "testrpc") {
         _listOfOwners = [accounts[1], accounts[2], accounts[3]];
@@ -97,20 +113,10 @@ module.exports = function(deployer, network, accounts) {
         }
     }
 
-    console.log(_minRequired, _dayLimit, _listOfOwners);
+    //console.log(_minRequired, _dayLimit, _listOfOwners);
 
 
-    /**
-     * Crowdsale parameters
-     * =====================================
-     * Here you will set your MultiSigWallet parameters where you will be collecting the contributed ethers
-     * here you have to mention the list of wallet owners (none of them must be 0)
-     * and the minimum approvals required to approve the transactions.
-     */
-    var _startTime = getUnixTimestamp('2017-06-10 15:40:00 GMT');
-    var _endTime = getUnixTimestamp('2017-06-10 16:40:00 GMT');
-    var _minimumFundingGoal = etherInWei(13);
-    var _tokenCap = tokenInSmallestUnit(50000, _tokenDecimals);
+
 
 
     /**
@@ -193,8 +199,8 @@ module.exports = function(deployer, network, accounts) {
         if (showURL) console.log("Transaction URL is: " + getEtherScanUrl(network, multisigWalletInstance.transactionHash, "tx"));
         if (showABI) console.log("MultiSigWallet ABI is: ", JSON.stringify(multisigWalletInstance.abi));
         if (debug) console.log("\n\n");
-        if (debug) console.log("*************  Deploying MintedTokenCappedCrowdsale  ************** \n");
-        return Crowdsale.new(tokenInstance.address, pricingInstance.address, multisigWalletInstance.address, _startTime, _endTime, _minimumFundingGoal, _tokenCap);
+        if (debug) console.log("*************  Deploying Crowdsale  ************** \n");
+        return Crowdsale.new(tokenInstance.address, pricingInstance.address, multisigWalletInstance.address, _startTime, _endTime, _minimumFundingGoal, _cap);
     }).then(function(Instance) {
         crowdsaleInstance = Instance;
         if (debug) console.log("MintedTokenCappedCrowdsale address is: ", crowdsaleInstance.address);
