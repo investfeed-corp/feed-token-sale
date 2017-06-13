@@ -2,7 +2,12 @@
 
 const assertJump = require('./helpers/assertJump');
 var Token = artifacts.require("./CrowdsaleToken.sol");
+var SafeMathLib = artifacts.require("./SafeMathLib.sol");
 contract('CrowdsaleToken', function(accounts) {
+
+
+    Token.link(SafeMathLib);
+
     var _tokenName = "Etheriya";
     var _tokenSymbol = "RIYA";
     var _tokenDecimals = 8;

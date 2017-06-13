@@ -2,9 +2,9 @@
 
 const assertJump = require('./helpers/assertJump');
 var StandardTokenMock = artifacts.require('./helpers/StandardTokenMock.sol');
-
+var SafeMathLib = artifacts.require("./SafeMathLib.sol");
 contract('StandardToken', function(accounts) {
-
+    StandardTokenMock.link(SafeMathLib);
     it('should return the correct totalSupply after construction', async function() {
         let token = await StandardTokenMock.new(accounts[0], 100);
         let totalSupply = await token.totalSupply();

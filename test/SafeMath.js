@@ -1,11 +1,13 @@
 const assertJump = require('./helpers/assertJump');
 var SafeMathMock = artifacts.require("./helpers/SafeMathMock.sol");
+var SafeMathLib = artifacts.require("./SafeMathLib.sol");
+
 
 contract('SafeMath', function(accounts) {
 
     let safeMath;
-
     before(async function() {
+        SafeMathMock.link(SafeMathLib);
         safeMath = await SafeMathMock.new();
     });
 
