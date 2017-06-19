@@ -3,11 +3,10 @@ const assertJump = require('./helpers/assertJump');
 //var SafeMathLib = artifacts.require("../contracts/SafeMathLib.sol");
 
 var BasicTokenMock = artifacts.require("./helpers/BasicTokenMock.sol");
-var SafeMathLib = artifacts.require("./SafeMathLib.sol");
+
 
 contract('BasicToken', function(accounts) {
     let token;
-    BasicTokenMock.link(SafeMathLib);
 
     before(async function() {
         token = await BasicTokenMock.new(accounts[0], 100);

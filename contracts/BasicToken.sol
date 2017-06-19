@@ -9,8 +9,7 @@ import './SafeMathLib.sol';
  * @title Basic token
  * @dev Basic version of StandardToken, with no allowances. 
  */
-contract BasicToken is ERC20Basic {
-  using SafeMathLib for uint;
+contract BasicToken is ERC20Basic, SafeMathLib {
 
   mapping(address => uint) balances;
 
@@ -30,8 +29,8 @@ contract BasicToken is ERC20Basic {
   * @param _value The amount to be transferred.
   */
   function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) returns (bool success) {
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
+    balances[msg.sender] = safeSub(balances[msg.sender],_value);
+    balances[_to] = safeAdd(balances[_to],_value);
     Transfer(msg.sender, _to, _value);
     return true;
   }

@@ -4,7 +4,7 @@ var PricingStartegy = artifacts.require("./EthTranchePricing.sol");
 var MultisigWallet = artifacts.require("./MultisigWallet.sol");
 var Crowdsale = artifacts.require("./MintedTokenCappedCrowdsale.sol");
 var FinalizeAgent = artifacts.require("./BonusFinalizeAgent.sol");
-var SafeMathLib = artifacts.require("./SafeMathLib.sol");
+
 
 var debug = true;
 var showABI = true;
@@ -26,36 +26,13 @@ module.exports = function(deployer, network, accounts) {
      * Here you can chose your token name, symbol, initial supply & decimals etc.
      */
 
-    var _tokenName = "TOSHCOIN";
-    var _tokenSymbol = "TOSH";
+    var _tokenName = "Feed";
+    var _tokenSymbol = "FDT";
     var _tokenDecimals = 8;
     var _tokenInitialSupply = tokenInSmallestUnit(0, _tokenDecimals);
     var _tokenMintable = true;
 
-    /**
-     * Pricing tranches for pricing strategy 
-     * =====================================
-     * The last token price must be 0 which means that beyond the last pricing limit, the tokens cost 
-     * per ether would be 0. Which further means your tokens will not be sold further if that slab is 
-     * reached. In other words that last ether pricing slab is your maximum limit of ethers you can 
-     * receive during your crowdsale. So you need to make sure that your last slab will touch only when 
-     * your _tokenCap (total tokens) are sold. Otherwise your crowdsale contract will stop taking 
-     * contribution even before your _tokenCap (total tokens) are sold. 
-     * 
-     * This is applicable only if your crowdsale is capped by _tokenCap (total tokens)
-     * but your pricing is in ethers slab.
-     * 
-     * If you chose both the crowdsale & pricing to be TokenCapped+TokenTranch or EthCapped+EthTranch 
-     * then this situation will not arise. 
-     */
-    var _tranches = [
-        etherInWei(0), tokenPriceInWeiFromTokensPerEther(1500),
-        etherInWei(5), tokenPriceInWeiFromTokensPerEther(1300),
-        etherInWei(10), tokenPriceInWeiFromTokensPerEther(1100),
-        etherInWei(15), tokenPriceInWeiFromTokensPerEther(1050),
-        etherInWei(20), tokenPriceInWeiFromTokensPerEther(1000),
-        etherInWei(300), tokenPriceInWeiFromTokensPerEther(0)
-    ];
+
 
     /**
      * MultiSigWallet parameters
@@ -87,7 +64,7 @@ module.exports = function(deployer, network, accounts) {
         }
     }
 
-    console.log(_minRequired, _dayLimit, _listOfOwners);
+    //console.log(_minRequired, _dayLimit, _listOfOwners);
 
 
     /**
@@ -97,11 +74,34 @@ module.exports = function(deployer, network, accounts) {
      * here you have to mention the list of wallet owners (none of them must be 0)
      * and the minimum approvals required to approve the transactions.
      */
-    var _startTime = getUnixTimestamp('2017-06-10 15:40:00 GMT');
-    var _endTime = getUnixTimestamp('2017-06-10 16:40:00 GMT');
+    var _startTime = getUnixTimestamp('2017-06-13 15:40:00 GMT');
+    var _endTime = getUnixTimestamp('2017-06-13 20:40:00 GMT');
     var _minimumFundingGoal = etherInWei(13);
-    var _cap = tokenInSmallestUnit(50000, _tokenDecimals);
+    var _cap = etherInWei(20);
 
+    /**
+     * Pricing tranches for pricing strategy 
+     * =====================================
+     * The last token price must be 0 which means that beyond the last pricing limit, the tokens cost 
+     * per ether would be 0. Which further means your tokens will not be sold further if that slab is 
+     * reached. In other words that last ether pricing slab is your maximum limit of ethers you can 
+     * receive during your crowdsale. So you need to make sure that your last slab will touch only when 
+     * your _tokenCap (total tokens) are sold. Otherwise your crowdsale contract will stop taking 
+     * contribution even before your _tokenCap (total tokens) are sold. 
+     * 
+     * This is applicable only if your crowdsale is capped by _tokenCap (total tokens)
+     * but your pricing is in ethers slab.
+     * 
+     * If you chose both the crowdsale & pricing to be TokenCapped+TokenTranch or EthCapped+EthTranch 
+     * then this situation will not arise. 
+     */
+    var _tranches = [
+        etherInWei(0), tokenPriceInWeiFromTokensPerEther(10000),
+        etherInWei(5), tokenPriceInWeiFromTokensPerEther(9000),
+        etherInWei(10), tokenPriceInWeiFromTokensPerEther(8000),
+        etherInWei(15), tokenPriceInWeiFromTokensPerEther(7000),
+        _cap, 0
+    ];
 
     /**
      * Bonus Agent parameters
@@ -151,9 +151,6 @@ module.exports = function(deployer, network, accounts) {
     var multisigWalletInstance;
     var crowdsaleInstance;
 
-    deployer.deploy(SafeMathLib);
-    deployer.link(SafeMathLib, [Token, PricingStartegy, Crowdsale, FinalizeAgent]);
-    //deployer.link(SafeMathLib, [SafeMathLibMock, StandardTokenMock, BasicTokenMock, ReleasableTokenMock, MintableTokenMock, UpgradeableTokenMock, newTokenContract]);
     deployer.then(function() {
         return Token.new(_tokenName, _tokenSymbol, _tokenInitialSupply, _tokenDecimals, _tokenMintable);
     }).then(function(Instance) {

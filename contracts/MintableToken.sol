@@ -13,8 +13,6 @@ import "./SafeMathLib.sol";
  */
 contract MintableToken is StandardToken, Ownable {
 
-  using SafeMathLib for uint;
-
   bool public mintingFinished = false;
 
   /** List of agents that are allowed to create new tokens */
@@ -28,8 +26,8 @@ contract MintableToken is StandardToken, Ownable {
    * Only callably by a crowdsale contract (mint agent).
    */
   function mint(address receiver, uint amount) onlyMintAgent canMint public {
-    totalSupply = totalSupply.plus(amount);
-    balances[receiver] = balances[receiver].plus(amount);
+    totalSupply = safeAdd(totalSupply,amount);
+    balances[receiver] = safeAdd(balances[receiver],amount);
 
     // This will make the mint transaction apper in EtherScan.io
     // We can remove this after there is a standardized minting event

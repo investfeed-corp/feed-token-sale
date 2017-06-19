@@ -7,9 +7,7 @@ import './Ownable.sol';
 
 
 /// @dev Time milestone based pricing with special support for pre-ico deals.
-contract MilestonePricing is PricingStrategy, Ownable {
-
-  using SafeMathLib for uint;
+contract MilestonePricing is PricingStrategy, Ownable, SafeMathLib {
 
   uint public constant MAX_MILESTONE = 10;
 
@@ -129,11 +127,11 @@ contract MilestonePricing is PricingStrategy, Ownable {
 
     // This investor is coming through pre-ico
     if(preicoAddresses[msgSender] > 0) {
-      return value.times(multiplier) / preicoAddresses[msgSender];
+      return safeMul(value,multiplier) / preicoAddresses[msgSender];
     }
 
     uint price = getCurrentPrice();
-    return value.times(multiplier) / price;
+    return safeMul(value,multiplier) / price;
   }
 
   function() payable {

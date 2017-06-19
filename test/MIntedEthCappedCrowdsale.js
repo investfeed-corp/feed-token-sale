@@ -7,7 +7,7 @@ var Crowdsale = artifacts.require("./MintedEthCappedCrowdsale.sol");
 var FinalizeAgent = artifacts.require("./BonusFinalizeAgent.sol");
 var MultisigWallet = artifacts.require('./MultisigWallet.sol');
 var Pricing = artifacts.require("./EthTranchePricing.sol");
-var SafeMathLib = artifacts.require("./SafeMathLib.sol");
+
 
 function etherInWei(x) {
     return web3.toBigNumber(web3.toWei(x, 'ether')).toNumber();
@@ -34,10 +34,6 @@ contract('MintedEthCappedCrowdsale: Success Scenario', function(accounts) {
         assert.isFalse(!!err);
     };
 
-    Token.link(SafeMathLib);
-    Crowdsale.link(SafeMathLib);
-    FinalizeAgent.link(SafeMathLib);
-    Pricing.link(SafeMathLib);
 
     var _tokenName = "TOSHCOIN";
     var _tokenSymbol = "TOSH";

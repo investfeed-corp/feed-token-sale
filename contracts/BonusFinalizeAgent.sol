@@ -12,9 +12,7 @@ import "./SafeMathLib.sol";
  * BonusAllocationFinal must be set as the minting agent for the MintableToken.
  *
  */
-contract BonusFinalizeAgent is FinalizeAgent {
-
-  using SafeMathLib for uint;
+contract BonusFinalizeAgent is FinalizeAgent,SafeMathLib {
 
   CrowdsaleToken public token;
   Crowdsale public crowdsale;
@@ -74,7 +72,7 @@ contract BonusFinalizeAgent is FinalizeAgent {
     uint tokensSold = crowdsale.tokensSold();
 
     for (uint i=0;i<totalMembers;i++){
-      allocatedBonus = tokensSold.times(bonusOf[teamAddresses[i]]) / 10000;
+      allocatedBonus = safeMul(tokensSold,bonusOf[teamAddresses[i]]) / 10000;
       // move tokens to the team multisig wallet
       token.mint(teamAddresses[i], allocatedBonus);
     }

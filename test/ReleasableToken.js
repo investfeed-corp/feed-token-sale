@@ -3,12 +3,9 @@
 const assertJump = require('./helpers/assertJump');
 var Token = artifacts.require("./helpers/ReleasableTokenMock.sol");
 var ReleaseAgent = artifacts.require("./helpers/SimpleReleaseAgent.sol");
-var SafeMathLib = artifacts.require("./SafeMathLib.sol");
+
 
 contract('ReleasableToken', function(accounts) {
-
-    ReleaseAgent.link(SafeMathLib);
-    Token.link(SafeMathLib);
 
     var _tokenName = "TOSHCOIN";
     var _tokenSymbol = "TCO";

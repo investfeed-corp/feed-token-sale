@@ -18,7 +18,7 @@ import "./Haltable.sol";
  * - All functions can be halted by owner if something goes wrong
  *
  */
-contract PreICOProxyBuyer is Ownable, Haltable {
+contract PreICOProxyBuyer is Ownable, Haltable, SafeMathLib {
 
   /** How many investors we have now */
   uint public investorCount;
@@ -117,7 +117,7 @@ contract PreICOProxyBuyer is Ownable, Haltable {
 
     bool existing = balances[investor] > 0;
 
-    balances[investor] = SafeMathLib.safeAdd(balances[investor], msg.value);
+    balances[investor] = safeAdd(balances[investor], msg.value);
 
     // Need to fulfill minimum limit
     if(balances[investor] < weiMinimumLimit) {
@@ -130,7 +130,7 @@ contract PreICOProxyBuyer is Ownable, Haltable {
       investorCount++;
     }
 
-    weiRaisedTotal = SafeMathLib.safeAdd(weiRaisedTotal, msg.value);
+    weiRaisedTotal = safeAdd(weiRaisedTotal, msg.value);
     if(weiRaisedTotal > weiCap) {
       throw;
     }
@@ -176,14 +176,14 @@ contract PreICOProxyBuyer is Ownable, Haltable {
     if(getState() != State.Distributing) {
       throw;
     }
-    return SafeMathLib.safeMul(balances[investor], tokensBought) / weiRaisedTotal;
+    return safeMul(balances[investor], tokensBought) / weiRaisedTotal;
   }
 
   /**
    * How many tokens remain unclaimed for an investor.
    */
   function getClaimLeft(address investor) public constant returns (uint) {
-    return SafeMathLib.safeSub(getClaimAmount(investor), claimed[investor]);
+    return safeSub(getClaimAmount(investor), claimed[investor]);
   }
 
   /**
@@ -214,8 +214,8 @@ contract PreICOProxyBuyer is Ownable, Haltable {
       claimCount++;
     }
 
-    claimed[investor] = SafeMathLib.safeAdd(claimed[investor], amount);
-    totalClaimed = SafeMathLib.safeAdd(totalClaimed, amount);
+    claimed[investor] = safeAdd(claimed[investor], amount);
+    totalClaimed = safeAdd(totalClaimed, amount);
     getToken().transfer(investor, amount);
 
     Distributed(investor, amount);

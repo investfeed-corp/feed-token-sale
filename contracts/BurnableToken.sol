@@ -4,7 +4,6 @@ import './StandardToken.sol';
 
 
 contract BurnableToken is StandardToken {
-using SafeMathLib for uint;
   address public constant BURN_ADDRESS = 0;
 
   /** How many tokens we burned */
@@ -16,8 +15,8 @@ using SafeMathLib for uint;
    */
   function burn(uint burnAmount) {
     address burner = msg.sender;
-    balances[burner] = balances[burner].sub(burnAmount);
-    totalSupply = totalSupply.sub(burnAmount);
+    balances[burner] = safeSub(balances[burner],burnAmount);
+    totalSupply = safeSub(totalSupply,burnAmount);
     Burned(burner, burnAmount);
   }
 }

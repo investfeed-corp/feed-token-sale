@@ -10,8 +10,7 @@ import './SafeMathLib.sol';
  * Based on code by FirstBlood:
  * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
-contract StandardToken is ERC20{
-  using SafeMathLib for uint;
+contract StandardToken is ERC20, SafeMathLib{
   /* Token supply got increased and a new owner received these tokens */
   event Minted(address receiver, uint amount);
 
@@ -37,8 +36,8 @@ contract StandardToken is ERC20{
   function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) returns (bool success) {
    
    
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
+    balances[msg.sender] = safeSub(balances[msg.sender],_value);
+    balances[_to] = safeAdd(balances[_to],_value);
     Transfer(msg.sender, _to, _value);
     return true;
   }
@@ -49,9 +48,9 @@ contract StandardToken is ERC20{
     // Check is not needed because safeSub(_allowance, _value) will already throw if this condition is not met
     // if (_value > _allowance) throw;
 
-    balances[_to] = balances[_to].add(_value);
-    balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
+    balances[_to] = safeAdd(balances[_to],_value);
+    balances[_from] = safeSub(balances[_from],_value);
+    allowed[_from][msg.sender] = safeSub(_allowance,_value);
     Transfer(_from, _to, _value);
     return true;
   }
@@ -87,7 +86,7 @@ contract StandardToken is ERC20{
   onlyPayloadSize(2 * 32)
   returns (bool success) {
       uint oldValue = allowed[msg.sender][_spender];
-      allowed[msg.sender][_spender] = oldValue.add(_addedValue);
+      allowed[msg.sender][_spender] = safeAdd(oldValue,_addedValue);
       Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
       return true;
   }
@@ -106,7 +105,7 @@ contract StandardToken is ERC20{
       if (_subtractedValue > oldVal) {
           allowed[msg.sender][_spender] = 0;
       } else {
-          allowed[msg.sender][_spender] = oldVal.sub(_subtractedValue);
+          allowed[msg.sender][_spender] = safeSub(oldVal,_subtractedValue);
       }
       Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
       return true;

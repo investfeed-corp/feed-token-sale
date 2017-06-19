@@ -3,7 +3,6 @@
 const assertJump = require('./helpers/assertJump');
 var Token = artifacts.require("./helpers/MintableTokenMock.sol");
 var bonusContract = artifacts.require("../contracts/BonusFinalizeAgent.sol");
-var SafeMathLib = artifacts.require("./SafeMathLib.sol");
 
 function etherInWei(x) {
     return web3.toBigNumber(web3.toWei(x, 'ether')).toNumber();
@@ -23,7 +22,7 @@ contract('BonusFinalizeAgent', function(accounts) {
     var _teamBonusPoints = [200, 200, 200];
     var _teamAddresses = [accounts[0], accounts[1], accounts[2]];
 
-    Token.link(SafeMathLib);
+
     var _tokenName = "TOSHCOIN";
     var _tokenSymbol = "TCO";
     var _tokenDecimals = 8;

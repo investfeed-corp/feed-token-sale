@@ -13,9 +13,7 @@ import "./SafeMathLib.sol";
  * - Have refund after X days as a safety hatch if the crowdsale doesn't materilize
  *
  */
-contract PresaleFundCollector is Ownable {
-
-  using SafeMathLib for uint;
+contract PresaleFundCollector is Ownable, SafeMathLib {
 
   /** How many investors when can carry per a single contract */
   uint public MAX_INVESTORS = 32;
@@ -77,7 +75,7 @@ contract PresaleFundCollector is Ownable {
 
     bool existing = balances[investor] > 0;
 
-    balances[investor] = balances[investor].plus(msg.value);
+    balances[investor] = safeAdd(balances[investor],msg.value);
 
     // Need to fulfill minimum limit
     if(balances[investor] < weiMinimumLimit) {

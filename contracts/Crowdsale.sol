@@ -19,9 +19,7 @@ import "./FractionalERC20.sol";
  * - different investment policies (require server side customer id, allow only whitelisted addresses)
  *
  */
-contract Crowdsale is Haltable {
-
-  using SafeMathLib for uint;
+contract Crowdsale is Haltable, SafeMathLib {
 
   /* The token we are selling */
   FractionalERC20 public token;
@@ -194,12 +192,12 @@ contract Crowdsale is Haltable {
     }
 
     // Update investor
-    investedAmountOf[receiver] = investedAmountOf[receiver].plus(weiAmount);
-    tokenAmountOf[receiver] = tokenAmountOf[receiver].plus(tokenAmount);
+    investedAmountOf[receiver] = safeAdd(investedAmountOf[receiver],weiAmount);
+    tokenAmountOf[receiver] = safeAdd(tokenAmountOf[receiver],tokenAmount);
 
     // Update totals
-    weiRaised = weiRaised.plus(weiAmount);
-    tokensSold = tokensSold.plus(tokenAmount);
+    weiRaised = safeAdd(weiRaised,weiAmount);
+    tokensSold = safeAdd(tokensSold,tokenAmount);
 
     // Check that we did not bust the cap
     if(isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
@@ -235,11 +233,11 @@ contract Crowdsale is Haltable {
     uint tokenAmount = fullTokens * 10**token.decimals();
     uint weiAmount = weiPrice * fullTokens; // This can be also 0, we give out tokens for free
 
-    weiRaised = weiRaised.plus(weiAmount);
-    tokensSold = tokensSold.plus(tokenAmount);
+    weiRaised = safeAdd(weiRaised,weiAmount);
+    tokensSold = safeAdd(tokensSold,tokenAmount);
 
-    investedAmountOf[receiver] = investedAmountOf[receiver].plus(weiAmount);
-    tokenAmountOf[receiver] = tokenAmountOf[receiver].plus(tokenAmount);
+    investedAmountOf[receiver] = safeAdd(investedAmountOf[receiver],weiAmount);
+    tokenAmountOf[receiver] = safeAdd(tokenAmountOf[receiver],tokenAmount);
 
     assignTokens(receiver, tokenAmount);
 
@@ -406,7 +404,7 @@ contract Crowdsale is Haltable {
    */
   function loadRefund() public payable inState(State.Failure) {
     if(msg.value == 0) throw;
-    loadedRefund = loadedRefund.plus(msg.value);
+    loadedRefund = safeAdd(loadedRefund,msg.value);
   }
 
   /**
@@ -416,7 +414,7 @@ contract Crowdsale is Haltable {
     uint256 weiValue = investedAmountOf[msg.sender];
     if (weiValue == 0) throw;
     investedAmountOf[msg.sender] = 0;
-    weiRefunded = weiRefunded.plus(weiValue);
+    weiRefunded = safeAdd(weiRefunded,weiValue);
     Refund(msg.sender, weiValue);
     if (!msg.sender.send(weiValue)) throw;
   }

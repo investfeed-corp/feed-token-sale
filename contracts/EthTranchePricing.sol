@@ -9,8 +9,7 @@ import './Ownable.sol';
 ///      Implementing "first price" tranches, meaning, that if byers order is
 ///      covering more than one tranche, the price of the lowest tranche will apply
 ///      to the whole order.
-contract EthTranchePricing is PricingStrategy, Ownable {
-  using SafeMathLib for uint;
+contract EthTranchePricing is PricingStrategy, Ownable, SafeMathLib {
 
   uint public constant MAX_TRANCHES = 10;
 
@@ -148,11 +147,11 @@ contract EthTranchePricing is PricingStrategy, Ownable {
 
     // This investor is coming through pre-ico
     if(preicoAddresses[msgSender] > 0) {
-      return value.times(multiplier) / preicoAddresses[msgSender];
+      return safeMul(value,multiplier) / preicoAddresses[msgSender];
     }
 
     uint price = getCurrentPrice(weiRaised);
-    return value.times(multiplier) / price;
+    return safeMul(value,multiplier) / price;
   }
 
   function() payable {

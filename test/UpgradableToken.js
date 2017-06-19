@@ -3,10 +3,10 @@
 const assertJump = require('./helpers/assertJump');
 var Token = artifacts.require("./helpers/UpgradeableTokenMock.sol");
 var newTokenContract = artifacts.require("../contracts/newToken.sol");
-var SafeMathLib = artifacts.require("./SafeMathLib.sol");
+
 contract('UpgradeableToken', function(accounts) {
-    newTokenContract.link(SafeMathLib);
-    Token.link(SafeMathLib);
+
+
     var _tokenName = "TOSHCOIN";
     var _tokenSymbol = "TCO";
     var _tokenDecimals = 8;
