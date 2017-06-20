@@ -27,42 +27,11 @@ module.exports = function(deployer, network, accounts) {
      */
 
     var _tokenName = "Feed";
-    var _tokenSymbol = "FDT";
+    var _tokenSymbol = "FEED";
     var _tokenDecimals = 8;
     var _tokenInitialSupply = tokenInSmallestUnit(0, _tokenDecimals);
     var _tokenMintable = true;
 
-
-
-    /**
-     * MultiSigWallet parameters
-     * =====================================
-     * Here you will set your MultiSigWallet parameters where you will be collecting the contributed ethers
-     * here you have to mention the list of wallet owners (none of them must be 0)
-     * and the minimum approvals required to approve the transactions.
-     */
-    var _minRequired = 2;
-    var _dayLimit = 2;
-    var _listOfOwners;
-    if (network == "testrpc") {
-        _listOfOwners = [accounts[1], accounts[2], accounts[3]];
-    } else if (network == "ropsten") {
-        var aliceRopsten = "0x00568Fa85228C66111E3181085df48681273cD77";
-        var bobRopsten = "0x00B600dE56F7570AEE3d57fe55E0462e51ca5280";
-        var eveRopsten = "0x00F131eD217EC029732235A96EEEe044555CEd4d";
-        _listOfOwners = [aliceRopsten, bobRopsten, eveRopsten];
-    } else if (network == "mainnet") {
-        // you have to manually specify this 
-        // before you deploy this in mainnet
-        // or else this deployment will fail
-        var member1 = "0x00";
-        var member2 = "0x00";
-        var member3 = "0x00";
-        _listOfOwners = [member1, member2, member3];
-        if (member1 == "0x00" || member2 == "0x00" || member3 == "0x00") {
-            throw new Error("MultiSigWallet members are not set properly. Please set them in migration/2_deploy_contracts.js.");
-        }
-    }
 
     //console.log(_minRequired, _dayLimit, _listOfOwners);
 
@@ -76,8 +45,8 @@ module.exports = function(deployer, network, accounts) {
      */
     var _startTime = getUnixTimestamp('2017-06-13 15:40:00 GMT');
     var _endTime = getUnixTimestamp('2017-06-13 20:40:00 GMT');
-    var _minimumFundingGoal = etherInWei(13);
-    var _cap = etherInWei(20);
+    var _minimumFundingGoal = etherInWei(1500);
+    var _cap = etherInWei(50000);
 
     /**
      * Pricing tranches for pricing strategy 
@@ -137,6 +106,39 @@ module.exports = function(deployer, network, accounts) {
             throw new Error("Team members addresses are not set properly. Please set them in migration/2_deploy_contracts.js.");
         }
     }
+
+
+    /**
+     * MultiSigWallet parameters
+     * =====================================
+     * Here you will set your MultiSigWallet parameters where you will be collecting the contributed ethers
+     * here you have to mention the list of wallet owners (none of them must be 0)
+     * and the minimum approvals required to approve the transactions.
+     */
+    var _minRequired = 2;
+    var _dayLimit = 2;
+    var _listOfOwners;
+    if (network == "testrpc") {
+        _listOfOwners = [accounts[1], accounts[2], accounts[3]];
+    } else if (network == "ropsten") {
+        var aliceRopsten = "0x00568Fa85228C66111E3181085df48681273cD77";
+        var bobRopsten = "0x00B600dE56F7570AEE3d57fe55E0462e51ca5280";
+        var eveRopsten = "0x00F131eD217EC029732235A96EEEe044555CEd4d";
+        _listOfOwners = [aliceRopsten, bobRopsten, eveRopsten];
+    } else if (network == "mainnet") {
+        // you have to manually specify this 
+        // before you deploy this in mainnet
+        // or else this deployment will fail
+        var member1 = "0x00";
+        var member2 = "0x00";
+        var member3 = "0x00";
+        _listOfOwners = [member1, member2, member3];
+        if (member1 == "0x00" || member2 == "0x00" || member3 == "0x00") {
+            throw new Error("MultiSigWallet members are not set properly. Please set them in migration/2_deploy_contracts.js.");
+        }
+    }
+
+
     /**
      * 
      * ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -148,14 +150,14 @@ module.exports = function(deployer, network, accounts) {
     var tokenInstance;
     var pricingInstance;
     var finalizeAgentInstance;
-    var multisigWalletInstance;
     var crowdsaleInstance;
 
     deployer.then(function() {
         return Token.new(_tokenName, _tokenSymbol, _tokenInitialSupply, _tokenDecimals, _tokenMintable);
     }).then(function(Instance) {
         tokenInstance = Instance;
-        console.log(tokenInstance.transactionHash);
+        if (debug) console.log("CrowdsaleToken Parameters are:");
+        if (debug) console.log(_tokenName, _tokenSymbol, _tokenInitialSupply, _tokenDecimals, _tokenMintable);
         if (debug) console.log("CrowdsaleToken address is: ", tokenInstance.address);
         if (showURL) console.log("Token URL is: " + getEtherScanUrl(network, tokenInstance.address, "token"));
         if (showURL) console.log("Transaction URL is: " + getEtherScanUrl(network, tokenInstance.transactionHash, "tx"));
@@ -166,6 +168,8 @@ module.exports = function(deployer, network, accounts) {
         return PricingStartegy.new(_tranches);
     }).then(function(Instance) {
         pricingInstance = Instance;
+        if (debug) console.log("EthTranchePricing Parameters are:");
+        if (debug) console.log(_tranches);
         if (debug) console.log("EthTranchePricing address is: ", pricingInstance.address);
         if (showURL) console.log("Pricing URL is: " + getEtherScanUrl(network, pricingInstance.address, "address"));
         if (showURL) console.log("Transaction URL is: " + getEtherScanUrl(network, pricingInstance.transactionHash, "tx"));
@@ -176,16 +180,19 @@ module.exports = function(deployer, network, accounts) {
         return MultisigWallet.new(_listOfOwners, _minRequired, _dayLimit);
     }).then(function(Instance) {
         multisigWalletInstance = Instance;
+        if (debug) console.log("MultiSigWallet Parameters are:");
+        if (debug) console.log(_listOfOwners, _minRequired, _dayLimit);
         if (debug) console.log("MultiSigWallet address is: ", multisigWalletInstance.address);
         if (showURL) console.log("Wallet URL is: " + getEtherScanUrl(network, multisigWalletInstance.address, "address"));
         if (showURL) console.log("Transaction URL is: " + getEtherScanUrl(network, multisigWalletInstance.transactionHash, "tx"));
         if (showABI) console.log("MultiSigWallet ABI is: ", JSON.stringify(multisigWalletInstance.abi));
-        if (debug) console.log("\n\n");
-        if (debug) console.log("*************  Deploying MintedTokenCappedCrowdsale  ************** \n");
+        if (debug) console.log("*************  Deploying MintedEthCappedCrowdsale  ************** \n");
         return Crowdsale.new(tokenInstance.address, pricingInstance.address, multisigWalletInstance.address, _startTime, _endTime, _minimumFundingGoal, _cap);
     }).then(function(Instance) {
         crowdsaleInstance = Instance;
-        if (debug) console.log("MintedTokenCappedCrowdsale address is: ", crowdsaleInstance.address);
+        if (debug) console.log("MintedEthCappedCrowdsale Parameters are:");
+        if (debug) console.log(tokenInstance.address, pricingInstance.address, multisigWalletInstance.address, _startTime, _endTime, _minimumFundingGoal, _cap);
+        if (debug) console.log("MintedEthCappedCrowdsale address is: ", crowdsaleInstance.address);
         if (showURL) console.log("Crowdsale URL is: " + getEtherScanUrl(network, crowdsaleInstance.address, "address"));
         if (showURL) console.log("Transaction URL is: " + getEtherScanUrl(network, crowdsaleInstance.transactionHash, "tx"));
         if (showABI) console.log("MintedTokenCappedCrowdsale ABI is: ", JSON.stringify(crowdsaleInstance.abi));
