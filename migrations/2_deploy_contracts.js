@@ -31,7 +31,7 @@ module.exports = function(deployer, network, accounts) {
     var _tokenDecimals = 8;
     var _tokenInitialSupply = tokenInSmallestUnit(0, _tokenDecimals);
     var _tokenMintable = true;
-
+    //console.log("Wei price for 17k tokens is: ", tokenPriceInWeiFromTokensPerEther(17000));
 
     //console.log(_minRequired, _dayLimit, _listOfOwners);
 
@@ -43,10 +43,10 @@ module.exports = function(deployer, network, accounts) {
      * here you have to mention the list of wallet owners (none of them must be 0)
      * and the minimum approvals required to approve the transactions.
      */
-    var _startTime = getUnixTimestamp('2017-06-13 15:40:00 GMT');
-    var _endTime = getUnixTimestamp('2017-06-13 20:40:00 GMT');
+    var _startTime = getUnixTimestamp('2017-07-23 09:00:00 GMT');
+    var _endTime = getUnixTimestamp('2017-08-7 09:00:00 GMT');
     var _minimumFundingGoal = etherInWei(1500);
-    var _cap = etherInWei(50000);
+    var _cap = etherInWei(28000);
 
     /**
      * Pricing tranches for pricing strategy 
@@ -66,9 +66,7 @@ module.exports = function(deployer, network, accounts) {
      */
     var _tranches = [
         etherInWei(0), tokenPriceInWeiFromTokensPerEther(10000),
-        etherInWei(5), tokenPriceInWeiFromTokensPerEther(9000),
-        etherInWei(10), tokenPriceInWeiFromTokensPerEther(8000),
-        etherInWei(15), tokenPriceInWeiFromTokensPerEther(7000),
+        etherInWei(15000), tokenPriceInWeiFromTokensPerEther(9000),
         _cap, 0
     ];
 
@@ -80,14 +78,22 @@ module.exports = function(deployer, network, accounts) {
     // set BonusFinalizeAgent parameters
     // 2% to each member. 
     // Number of entries count must match with the count of _teamAddresses members
-    var _teamBonusPoints = [200, 200, 200];
+    var _teamBonusPoints = [150, 150, 150, 25, 25, 75, 75];
 
     // list of team mebers address respective to the above percentage.
     // alternatively you can just get all the bonus in one account & then distribute 
     // using some MultiSigWallet manually
     var _teamAddresses;
     if (network == "testrpc") {
-        _teamAddresses = [accounts[0], accounts[1], accounts[2]];
+        _teamAddresses = [
+            "0x22283B7315dd4B1741676e092279fc4F46ecC003",
+            "0xf1BdA8f06191bC29F46d0ee3CBF68555A478a217",
+            "0x15bac2c73532663058D3E82e9B1f8C7873Fef9e7",
+            "0x3312F915B20527214A5Fc097d4E6b0E7F41CC192",
+            "0x5F459fB028f7598cdaeB19461FcED31020e6534E",
+            "0x72Bbe344986351A0C4E899D655E81DE8f64E9794",
+            "0x6c750dA8df323D53eed6812a7AFB834B0752e94c"
+        ];
     } else if (network == "ropsten") {
         var aliceRopsten = "0x00568Fa85228C66111E3181085df48681273cD77";
         var bobRopsten = "0x00B600dE56F7570AEE3d57fe55E0462e51ca5280";
@@ -151,6 +157,7 @@ module.exports = function(deployer, network, accounts) {
     var pricingInstance;
     var finalizeAgentInstance;
     var crowdsaleInstance;
+    var multisigWalletInstance;
 
     deployer.then(function() {
         return Token.new(_tokenName, _tokenSymbol, _tokenInitialSupply, _tokenDecimals, _tokenMintable);
@@ -202,6 +209,8 @@ module.exports = function(deployer, network, accounts) {
         return FinalizeAgent.new(tokenInstance.address, crowdsaleInstance.address, _teamBonusPoints, _teamAddresses);
     }).then(function(Instance) {
         finalizeAgentInstance = Instance;
+        if (debug) console.log("BonusFinalizeAgent Parameters are:");
+        if (debug) console.log(tokenInstance.address, crowdsaleInstance.address, _teamBonusPoints, _teamAddresses);
         if (debug) console.log("BonusFinalizeAgent address is: ", finalizeAgentInstance.address);
         if (showURL) console.log("FinalizeAgent URL is: " + getEtherScanUrl(network, finalizeAgentInstance.address, "address"));
         if (showURL) console.log("Transaction URL is: " + getEtherScanUrl(network, finalizeAgentInstance.transactionHash, "tx"));
@@ -241,7 +250,6 @@ module.exports = function(deployer, network, accounts) {
         } else {
             console.log("Failure: Pricing is NOT sane in Crowdsale application. Something is bad. Moving ahead though. Please check it manually...");
         }
-        return crowdsaleInstance.isPricingSane();
     });
 };
 
