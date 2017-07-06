@@ -12,7 +12,8 @@ import './Ownable.sol';
 contract EthTranchePricing is PricingStrategy, Ownable, SafeMathLib {
 
   uint public constant MAX_TRANCHES = 10;
-
+ 
+ 
   // This contains all pre-ICO addresses, and their prices (weis per token)
   mapping (address => uint) public preicoAddresses;
 
@@ -141,7 +142,7 @@ contract EthTranchePricing is PricingStrategy, Ownable, SafeMathLib {
   }
 
   /// @dev Calculate the current price for buy in amount.
-  function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint8 decimals) public constant returns (uint) {
+  function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint decimals) public constant returns (uint) {
 
     uint multiplier = 10 ** decimals;
 
@@ -151,6 +152,7 @@ contract EthTranchePricing is PricingStrategy, Ownable, SafeMathLib {
     }
 
     uint price = getCurrentPrice(weiRaised);
+    
     return safeMul(value,multiplier) / price;
   }
 

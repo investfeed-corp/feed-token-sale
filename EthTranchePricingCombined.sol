@@ -72,7 +72,7 @@ contract PricingStrategy {
   }
 
  
-  function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint8 decimals) public constant returns (uint tokenAmount);
+  function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint decimals) public constant returns (uint tokenAmount);
 }
 
 
@@ -228,7 +228,7 @@ contract Crowdsale is Haltable, SafeMathLib {
   }
   function preallocate(address receiver, uint fullTokens, uint weiPrice) public onlyOwner {
 
-    uint tokenAmount = fullTokens * 10**token.decimals();
+    uint tokenAmount = fullTokens * 10**uint(token.decimals());
     uint weiAmount = weiPrice * fullTokens;
 
     weiRaised = safeAdd(weiRaised,weiAmount);
@@ -435,7 +435,7 @@ contract EthTranchePricing is PricingStrategy, Ownable, SafeMathLib {
   function getCurrentPrice(uint weiRaised) public constant returns (uint result) {
     return getCurrentTranche(weiRaised).price;
   }
-  function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint8 decimals) public constant returns (uint) {
+  function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint decimals) public constant returns (uint) {
 
     uint multiplier = 10 ** decimals;
     if(preicoAddresses[msgSender] > 0) {

@@ -169,9 +169,9 @@ contract('MintedEthCappedCrowdsale: Success Scenario', function(accounts) {
         var tokenPriceInWei = tokenPriceInWeiFromTokensPerEther(2000);
 
         await crowdsaleInstance.preallocate(buyer, tokensPurchased, tokenPriceInWei, { from: accounts[0] });
-        assert.equal(await tokenInstance.balanceOf(accounts[3]), tokenInSmallestUnit(tokensPurchased, _tokenDecimals));
-        assert.equal(await crowdsaleInstance.tokensSold.call(), tokenInSmallestUnit(tokensPurchased, _tokenDecimals));
-        assert.equal(await crowdsaleInstance.weiRaised.call(), tokensPurchased * tokenPriceInWei);
+        assert.equal(web3.toBigNumber(await tokenInstance.balanceOf(buyer)).toNumber(), tokenInSmallestUnit(tokensPurchased, _tokenDecimals), "Assert 1 Failed");
+        assert.equal(web3.toBigNumber(await crowdsaleInstance.tokensSold.call()).toNumber(), tokenInSmallestUnit(tokensPurchased, _tokenDecimals), "Assert 2 Failed");
+        assert.equal(web3.toBigNumber(await crowdsaleInstance.weiRaised.call()).toNumber(), tokensPurchased * tokenPriceInWei, "Assert 3 Failed");
     });
 
     it('Update: Owner must be able to update pricing strategy', async function() {

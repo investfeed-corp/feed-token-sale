@@ -67,13 +67,8 @@ contract ERC20 is ERC20Basic {
 
 
 contract StandardToken is ERC20, SafeMathLib {
-  /* Token supply got increased and a new owner received these tokens */
   event Minted(address receiver, uint amount);
-
-  /* Actual balances of token holders */
   mapping(address => uint) balances;
-
-  /* approve() allowances */
   mapping (address => mapping (address => uint)) allowed;
 
   function transfer(address _to, uint _value) returns (bool success) {
@@ -95,10 +90,10 @@ contract StandardToken is ERC20, SafeMathLib {
   function transferFrom(address _from, address _to, uint _value) returns (bool success) {
     uint _allowance = allowed[_from][msg.sender];
 
-    if (balances[_from] >= _value   // From a/c has balance
-        && _allowance >= _value    // Transfer approved
-        && _value > 0              // Non-zero transfer
-        && balances[_to] + _value > balances[_to]  // Overflow check
+    if (balances[_from] >= _value
+        && _allowance >= _value
+        && _value > 0
+        && balances[_to] + _value > balances[_to]
         ){
     balances[_to] = safeAdd(balances[_to],_value);
     balances[_from] = safeSub(balances[_from],_value);
@@ -219,7 +214,7 @@ contract UpgradeAgent {
 
  
   function setUpgradeAgent(address agent) external {
-
+    
       if(!canUpgrade()) {
         
         throw;

@@ -13,26 +13,26 @@ contract BasicToken is ERC20Basic, SafeMathLib {
 
   mapping(address => uint) balances;
 
-  /**
-   * @dev Fix for the ERC20 short address attack.
-   */
-  modifier onlyPayloadSize(uint size) {
-     if(msg.data.length < size + 4) {
-       throw;
-     }
-     _;
-  }
+
 
   /**
   * @dev transfer token for a specified address
   * @param _to The address to transfer to.
   * @param _value The amount to be transferred.
   */
-  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) returns (bool success) {
+  function transfer(address _to, uint _value) returns (bool success) {
+     if (balances[msg.sender] >= _value 
+        && _value > 0 
+        && balances[_to] + _value > balances[_to]
+        ) {
     balances[msg.sender] = safeSub(balances[msg.sender],_value);
     balances[_to] = safeAdd(balances[_to],_value);
     Transfer(msg.sender, _to, _value);
     return true;
+  } else {
+    return false;
+  }
+
   }
 
   /**

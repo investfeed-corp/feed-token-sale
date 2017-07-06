@@ -1,7 +1,6 @@
 'use strict';
 
 const assertJump = require('./helpers/assertJump');
-var Token = artifacts.require("./helpers/UpgradeableTokenMock.sol");
 var pricingContract = artifacts.require("../contracts/EthTranchePricing.sol");
 
 function etherInWei(x) {
@@ -27,6 +26,7 @@ contract('EthTranchePricing', function(accounts) {
         etherInWei(20), tokenPriceInWeiFromTokensPerEther(1000),
         etherInWei(300), tokenPriceInWeiFromTokensPerEther(0)
     ];
+    console.log(_tranches);
     var _tokenDecimals = 8;
     var pricing = null;
 
@@ -63,47 +63,44 @@ contract('EthTranchePricing', function(accounts) {
     });
 
     it('Calculation: Pricing must be calculated properly.', async function() {
-        await pricing.setPreicoAddress(accounts[3], tokenPriceInWeiFromTokensPerEther(2000));
-
-        var etherInvesting = 1;
-        var etherAlreadyRaised = 0;
-        var tokensAlreadyRaised = 0;
+        var value;
+        var weiRaised;
+        var tokensSold;
         var buyer = accounts[2];
         var slab = 0;
 
-        etherInvesting = 1;
-        etherAlreadyRaised = 0;
-        tokensAlreadyRaised = 0;
+        value = etherInWei(1);
+        weiRaised = 0;
+        tokensSold = 0;
         buyer = accounts[2];
         slab = 0;
-        // 150000000000 == 
-        assert.equal(web3.toBigNumber(await pricing.calculatePrice(etherInWei(etherInvesting), etherInWei(etherAlreadyRaised), tokenInSmallestUnit(tokensAlreadyRaised, _tokenDecimals), buyer, _tokenDecimals)).toNumber(), Math.floor(tokenInSmallestUnit(etherInWei(etherInvesting) / _tranches[2 * slab + 1], _tokenDecimals)));
 
+        assert.equal(web3.toBigNumber(await pricing.calculatePrice(value, weiRaised, tokensSold, buyer, _tokenDecimals)).toNumber(), Math.floor(tokenInSmallestUnit(value / _tranches[2 * slab + 1], _tokenDecimals)));
 
-        etherInvesting = 1;
-        etherAlreadyRaised = 2;
-        tokensAlreadyRaised = 3000;
+        value = etherInWei(1);
+        weiRaised = etherInWei(2);
+        tokensSold = tokenInSmallestUnit(3000, _tokenDecimals);
         buyer = accounts[2];
         slab = 0;
-        assert.equal(web3.toBigNumber(await pricing.calculatePrice(etherInWei(etherInvesting), etherInWei(etherAlreadyRaised), tokenInSmallestUnit(tokensAlreadyRaised, _tokenDecimals), buyer, _tokenDecimals)).toNumber(), Math.floor(tokenInSmallestUnit(etherInWei(etherInvesting) / _tranches[2 * slab + 1], _tokenDecimals)));
 
+        assert.equal(web3.toBigNumber(await pricing.calculatePrice(value, weiRaised, tokensSold, buyer, _tokenDecimals)).toNumber(), Math.floor(tokenInSmallestUnit(value / _tranches[2 * slab + 1], _tokenDecimals)));
 
-        etherInvesting = 3;
-        etherAlreadyRaised = 7;
-        tokensAlreadyRaised = 10100;
+        value = etherInWei(3);
+        weiRaised = etherInWei(7);
+        tokensSold = tokenInSmallestUnit(10100, _tokenDecimals);
         buyer = accounts[2];
         slab = 1;
-        assert.equal(web3.toBigNumber(await pricing.calculatePrice(etherInWei(etherInvesting), etherInWei(etherAlreadyRaised), tokenInSmallestUnit(tokensAlreadyRaised, _tokenDecimals), buyer, _tokenDecimals)).toNumber(), Math.floor(tokenInSmallestUnit(etherInWei(etherInvesting) / _tranches[2 * slab + 1], _tokenDecimals)));
 
+        assert.equal(web3.toBigNumber(await pricing.calculatePrice(value, weiRaised, tokensSold, buyer, _tokenDecimals)).toNumber(), Math.floor(tokenInSmallestUnit(value / _tranches[2 * slab + 1], _tokenDecimals)));
     });
 
     it('Calculation: Pricing for pre ico user must be calculated properly.', async function() {
         await pricing.setPreicoAddress(accounts[3], tokenPriceInWeiFromTokensPerEther(2000));
-        var etherInvesting = 3;
-        var etherAlreadyRaised = 7;
-        var tokensAlreadyRaised = 10100;
+        var value = etherInWei(3);
+        var weiRaised = etherInWei(7);
+        var tokensSold = tokenInSmallestUnit(10100, _tokenDecimals);
         var buyer = accounts[3];
-        assert.equal(web3.toBigNumber(await pricing.calculatePrice(etherInWei(etherInvesting), etherInWei(etherAlreadyRaised), tokenInSmallestUnit(tokensAlreadyRaised, _tokenDecimals), buyer, _tokenDecimals)).toNumber(), Math.floor(tokenInSmallestUnit(etherInWei(etherInvesting) / tokenPriceInWeiFromTokensPerEther(2000), _tokenDecimals)));
+        assert.equal(web3.toBigNumber(await pricing.calculatePrice(value, weiRaised, tokensSold, buyer, _tokenDecimals)).toNumber(), Math.floor(tokenInSmallestUnit(value / tokenPriceInWeiFromTokensPerEther(2000), _tokenDecimals)));
     });
 
     it('Transfer: ether transfer to pricing address should fail.', async function() {
