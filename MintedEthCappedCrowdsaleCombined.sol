@@ -36,14 +36,14 @@ contract Ownable {
         _;
   }
   function transferOwnership(address _newOwner) onlyOwner {
-        newOwner = _newOwner;
-    }
+    newOwner = _newOwner;
+  }
 
-function acceptOwnership() {
-        require(msg.sender == newOwner);
-        OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-    }
+  function acceptOwnership() {
+    require(msg.sender == newOwner);
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
 }
 
 contract ERC20Basic {
