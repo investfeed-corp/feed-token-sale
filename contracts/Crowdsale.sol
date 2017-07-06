@@ -248,12 +248,12 @@ contract Crowdsale is Haltable, SafeMathLib {
   /**
    * Allow anonymous contributions to this crowdsale.
    */
-  function investWithSignedAddress(address addr, uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
-     bytes32 hash = sha256(addr);
-     if (ecrecover(hash, v, r, s) != signerAddress) throw;
-     if(customerId == 0) throw;  // UUIDv4 sanity check
-     investInternal(addr, customerId);
-  }
+  // function investWithSignedAddress(address addr, uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
+  //    bytes32 hash = sha256(addr);
+  //    if (ecrecover(hash, v, r, s) != signerAddress) throw;
+  //    if(customerId == 0) throw;  // UUIDv4 sanity check
+  //    investInternal(addr, customerId);
+  // }
 
   /**
    * Track who is the customer making the payment so we can send thank you email.
@@ -277,9 +277,10 @@ contract Crowdsale is Haltable, SafeMathLib {
    * Invest to tokens, recognize the payer and clear his address.
    *
    */
-  function buyWithSignedAddress(uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
-    investWithSignedAddress(msg.sender, customerId, v, r, s);
-  }
+  
+  // function buyWithSignedAddress(uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
+  //   investWithSignedAddress(msg.sender, customerId, v, r, s);
+  // }
 
   /**
    * Invest to tokens, recognize the payer.
@@ -347,11 +348,11 @@ contract Crowdsale is Haltable, SafeMathLib {
    * This is e.g. for the accredited investor clearing.
    *
    */
-  function setRequireSignedAddress(bool value, address _signerAddress) onlyOwner {
-    requiredSignedAddress = value;
-    signerAddress = _signerAddress;
-    InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
-  }
+  // function setRequireSignedAddress(bool value, address _signerAddress) onlyOwner {
+  //   requiredSignedAddress = value;
+  //   signerAddress = _signerAddress;
+  //   InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
+  // }
 
   /**
    * Allow addresses to do early participation.

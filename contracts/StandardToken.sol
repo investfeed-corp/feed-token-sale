@@ -10,7 +10,7 @@ import './SafeMathLib.sol';
  * Based on code by FirstBlood:
  * https://github.com/Firstbloodio/token/blob/master/smart_contract/FirstBloodToken.sol
  */
-contract StandardToken is ERC20, SafeMathLib{
+contract StandardToken is ERC20, SafeMathLib {
   /* Token supply got increased and a new owner received these tokens */
   event Minted(address receiver, uint amount);
 
@@ -20,39 +20,39 @@ contract StandardToken is ERC20, SafeMathLib{
   /* approve() allowances */
   mapping (address => mapping (address => uint)) allowed;
 
-  /**
-   *
-   * Fix for the ERC20 short address attack
-   *
-   * http://vessenes.com/the-erc20-short-address-attack-explained/
-   */
-  modifier onlyPayloadSize(uint size) {
-     if(msg.data.length != size + 4) {
-       throw;
-     }
-     _;
-  }
-
-  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) returns (bool success) {
-   
-   
-    balances[msg.sender] = safeSub(balances[msg.sender],_value);
-    balances[_to] = safeAdd(balances[_to],_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
+  function transfer(address _to, uint _value) returns (bool success) {
+    if (balances[msg.sender] >= _value 
+        && _value > 0 
+        && balances[_to] + _value > balances[_to]
+        ) {
+      balances[msg.sender] = safeSub(balances[msg.sender],_value);
+      balances[_to] = safeAdd(balances[_to],_value);
+      Transfer(msg.sender, _to, _value);
+      return true;
+    }
+    else{
+      return false;
+    }
+    
   }
 
   function transferFrom(address _from, address _to, uint _value) returns (bool success) {
     uint _allowance = allowed[_from][msg.sender];
 
-    // Check is not needed because safeSub(_allowance, _value) will already throw if this condition is not met
-    // if (_value > _allowance) throw;
-
+    if (balances[_from] >= _value   // From a/c has balance
+        && _allowance >= _value    // Transfer approved
+        && _value > 0              // Non-zero transfer
+        && balances[_to] + _value > balances[_to]  // Overflow check
+        ){
     balances[_to] = safeAdd(balances[_to],_value);
     balances[_from] = safeSub(balances[_from],_value);
     allowed[_from][msg.sender] = safeSub(_allowance,_value);
     Transfer(_from, _to, _value);
     return true;
+        }
+    else {
+      return false;
+    }
   }
 
   function balanceOf(address _owner) constant returns (uint balance) {
@@ -82,9 +82,7 @@ contract StandardToken is ERC20, SafeMathLib{
    * Works around https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
    *
    */
-  function addApproval(address _spender, uint _addedValue)
-  onlyPayloadSize(2 * 32)
-  returns (bool success) {
+  function addApproval(address _spender, uint _addedValue) returns (bool success) {
       uint oldValue = allowed[msg.sender][_spender];
       allowed[msg.sender][_spender] = safeAdd(oldValue,_addedValue);
       Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
@@ -96,9 +94,7 @@ contract StandardToken is ERC20, SafeMathLib{
    *
    * Works around https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
    */
-  function subApproval(address _spender, uint _subtractedValue)
-  onlyPayloadSize(2 * 32)
-  returns (bool success) {
+  function subApproval(address _spender, uint _subtractedValue) returns (bool success) {
 
       uint oldVal = allowed[msg.sender][_spender];
 
