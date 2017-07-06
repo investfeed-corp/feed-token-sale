@@ -1,5 +1,5 @@
 pragma solidity ^0.4.11;
-
+// Thanks to OpenZeppeline & TokenMarket for the awesome Libraries.
  contract SafeMathLib {
 
   function safeMul(uint a, uint b) returns (uint) {
@@ -26,27 +26,24 @@ pragma solidity ^0.4.11;
 
 contract Ownable {
   address public owner;
-
-
+  address public newOwner;
+  event OwnershipTransferred(address indexed _from, address indexed _to);
   function Ownable() {
     owner = msg.sender;
   }
-
-
-  modifier onlyOwner() {
-    if (msg.sender != owner) {
-      throw;
-    }
-    _;
+  modifier onlyOwner {
+    require(msg.sender == owner);
+        _;
   }
-
-
-  function transferOwnership(address newOwner) onlyOwner {
-    if (newOwner != address(0)) {
-      owner = newOwner;
+  function transferOwnership(address _newOwner) onlyOwner {
+        newOwner = _newOwner;
     }
-  }
 
+function acceptOwnership() {
+        require(msg.sender == newOwner);
+        OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+    }
 }
 
 contract ERC20Basic {
