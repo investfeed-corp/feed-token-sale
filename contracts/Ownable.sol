@@ -24,7 +24,7 @@ contract Ownable {
    */
   modifier onlyOwner {
     require(msg.sender == owner);
-        _;
+    _;
   }
 
 
@@ -33,12 +33,13 @@ contract Ownable {
    * @param _newOwner The address to transfer ownership to. 
    */
   function transferOwnership(address _newOwner) onlyOwner {
-        newOwner = _newOwner;
-    }
+    newOwner = _newOwner;
+  }
 
-function acceptOwnership() {
-        require(msg.sender == newOwner);
-        OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
-    }
+  function acceptOwnership() {
+    require(msg.sender == newOwner);
+    OwnershipTransferred(owner, newOwner);
+    owner = newOwner;
+  }
+  
 }
