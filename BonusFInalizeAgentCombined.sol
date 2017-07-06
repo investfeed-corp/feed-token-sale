@@ -66,7 +66,7 @@ contract ERC20 is ERC20Basic {
 
 contract FractionalERC20 is ERC20 {
 
-  uint public decimals;
+  uint8 public decimals;
 
 }
 
@@ -374,9 +374,9 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
 
   string public symbol;
 
-  uint public decimals;
+  uint8 public decimals;
 
-  function CrowdsaleToken(string _name, string _symbol, uint _initialSupply, uint _decimals, bool _mintable)
+  function CrowdsaleToken(string _name, string _symbol, uint _initialSupply, uint8 _decimals, bool _mintable)
     UpgradeableToken(msg.sender) {
 
     owner = msg.sender;
@@ -447,7 +447,7 @@ contract FinalizeAgent {
   function isSane(address crowdsale) public constant returns (bool) {
     return true;
   }
-  function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint decimals) public constant returns (uint tokenAmount);
+  function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint8 decimals) public constant returns (uint tokenAmount);
 }
 
 

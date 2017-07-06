@@ -11,9 +11,9 @@ contract ReleasableTokenMock is StandardToken,ReleasableToken  {
 
   string public symbol;
 
-  uint public decimals;
+  uint8 public decimals;
 
-  function ReleasableTokenMock(string _name, string _symbol, uint _initialSupply, uint _decimals) {
+  function ReleasableTokenMock(string _name, string _symbol, uint _initialSupply, uint8 _decimals) {
     owner = msg.sender;
     name = _name;
     symbol = _symbol;

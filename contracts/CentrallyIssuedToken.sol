@@ -18,9 +18,9 @@ contract CentrallyIssuedToken is BurnableToken, UpgradeableToken {
 
   string public name;
   string public symbol;
-  uint public decimals;
+  uint8 public decimals;
 
-  function CentrallyIssuedToken(address _owner, string _name, string _symbol, uint _totalSupply, uint _decimals)  UpgradeableToken(_owner) {
+  function CentrallyIssuedToken(address _owner, string _name, string _symbol, uint _totalSupply, uint8 _decimals)  UpgradeableToken(_owner) {
     name = _name;
     symbol = _symbol;
     totalSupply = _totalSupply;

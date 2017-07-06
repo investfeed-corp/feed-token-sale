@@ -65,44 +65,48 @@ contract ERC20 is ERC20Basic {
 
 contract FractionalERC20 is ERC20 {
 
-  uint public decimals;
+  uint8 public decimals;
 
 }
 
-contract StandardToken is ERC20, SafeMathLib{
-  
+contract StandardToken is ERC20, SafeMathLib {
   event Minted(address receiver, uint amount);
-
-  
   mapping(address => uint) balances;
-
-  
   mapping (address => mapping (address => uint)) allowed;
 
-  modifier onlyPayloadSize(uint size) {
-     if(msg.data.length != size + 4) {
-       throw;
-     }
-     _;
-  }
-
-  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) returns (bool success) {
-   
-   
-    balances[msg.sender] = safeSub(balances[msg.sender],_value);
-    balances[_to] = safeAdd(balances[_to],_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
+  function transfer(address _to, uint _value) returns (bool success) {
+    if (balances[msg.sender] >= _value 
+        && _value > 0 
+        && balances[_to] + _value > balances[_to]
+        ) {
+      balances[msg.sender] = safeSub(balances[msg.sender],_value);
+      balances[_to] = safeAdd(balances[_to],_value);
+      Transfer(msg.sender, _to, _value);
+      return true;
+    }
+    else{
+      return false;
+    }
+    
   }
 
   function transferFrom(address _from, address _to, uint _value) returns (bool success) {
     uint _allowance = allowed[_from][msg.sender];
 
+    if (balances[_from] >= _value
+        && _allowance >= _value
+        && _value > 0
+        && balances[_to] + _value > balances[_to]
+        ){
     balances[_to] = safeAdd(balances[_to],_value);
     balances[_from] = safeSub(balances[_from],_value);
     allowed[_from][msg.sender] = safeSub(_allowance,_value);
     Transfer(_from, _to, _value);
     return true;
+        }
+    else {
+      return false;
+    }
   }
 
   function balanceOf(address _owner) constant returns (uint balance) {
@@ -110,6 +114,7 @@ contract StandardToken is ERC20, SafeMathLib{
   }
 
   function approve(address _spender, uint _value) returns (bool success) {
+
 
     if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
 
@@ -122,18 +127,15 @@ contract StandardToken is ERC20, SafeMathLib{
     return allowed[_owner][_spender];
   }
 
- function addApproval(address _spender, uint _addedValue)
-  onlyPayloadSize(2 * 32)
-  returns (bool success) {
+
+  function addApproval(address _spender, uint _addedValue) returns (bool success) {
       uint oldValue = allowed[msg.sender][_spender];
       allowed[msg.sender][_spender] = safeAdd(oldValue,_addedValue);
       Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
       return true;
   }
 
-  function subApproval(address _spender, uint _subtractedValue)
-  onlyPayloadSize(2 * 32)
-  returns (bool success) {
+  function subApproval(address _spender, uint _subtractedValue) returns (bool success) {
 
       uint oldVal = allowed[msg.sender][_spender];
 
@@ -147,7 +149,6 @@ contract StandardToken is ERC20, SafeMathLib{
   }
 
 }
-
 contract UpgradeAgent {
 
   uint public originalSupply;
@@ -191,7 +192,6 @@ contract UpgradeAgent {
 
       UpgradeState state = getUpgradeState();
       if(!(state == UpgradeState.ReadyToUpgrade || state == UpgradeState.Upgrading)) {
-        
         throw;
       }
 
@@ -367,9 +367,9 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
 
   string public symbol;
 
-  uint public decimals;
+  uint8 public decimals;
 
-  function CrowdsaleToken(string _name, string _symbol, uint _initialSupply, uint _decimals, bool _mintable)
+  function CrowdsaleToken(string _name, string _symbol, uint _initialSupply, uint8 _decimals, bool _mintable)
     UpgradeableToken(msg.sender) {
 
     owner = msg.sender;
@@ -418,6 +418,7 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
 
 }
 
+
 contract FinalizeAgent {
 
   function isFinalizeAgent() public constant returns(bool) {
@@ -439,7 +440,7 @@ contract FinalizeAgent {
   function isSane(address crowdsale) public constant returns (bool) {
     return true;
   }
-  function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint decimals) public constant returns (uint tokenAmount);
+  function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint8 decimals) public constant returns (uint tokenAmount);
 }
 
 
@@ -575,12 +576,6 @@ contract Crowdsale is Haltable, SafeMathLib {
     assignTokens(receiver, tokenAmount);
     Invested(receiver, weiAmount, tokenAmount, 0);
   }
-  function investWithSignedAddress(address addr, uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
-     bytes32 hash = sha256(addr);
-     if (ecrecover(hash, v, r, s) != signerAddress) throw;
-     if(customerId == 0) throw;
-     investInternal(addr, customerId);
-  }
   function investWithCustomerId(address addr, uint128 customerId) public payable {
     if(requiredSignedAddress) throw;
     if(customerId == 0) throw;
@@ -590,9 +585,6 @@ contract Crowdsale is Haltable, SafeMathLib {
     if(requireCustomerId) throw;
     if(requiredSignedAddress) throw;
     investInternal(addr, 0);
-  }
-  function buyWithSignedAddress(uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
-    investWithSignedAddress(msg.sender, customerId, v, r, s);
   }
   function buyWithCustomerId(uint128 customerId) public payable {
     investWithCustomerId(msg.sender, customerId);
@@ -616,14 +608,8 @@ contract Crowdsale is Haltable, SafeMathLib {
       throw;
     }
   }
-
   function setRequireCustomerId(bool value) onlyOwner {
     requireCustomerId = value;
-    InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
-  }
-  function setRequireSignedAddress(bool value, address _signerAddress) onlyOwner {
-    requiredSignedAddress = value;
-    signerAddress = _signerAddress;
     InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
   }
   function setEarlyParicipantWhitelist(address addr, bool status) onlyOwner {
@@ -693,6 +679,7 @@ contract Crowdsale is Haltable, SafeMathLib {
 }
 
 
+
 contract BonusFinalizeAgent is FinalizeAgent,SafeMathLib {
 
   CrowdsaleToken public token;
@@ -743,17 +730,11 @@ contract BonusFinalizeAgent is FinalizeAgent,SafeMathLib {
 
 
 contract MintedEthCappedCrowdsale is Crowdsale {
-
-  /* Maximum amount of wei this crowdsale can raise. */
   uint public weiCap;
 
   function MintedEthCappedCrowdsale(address _token, PricingStrategy _pricingStrategy, address _multisigWallet, uint _start, uint _end, uint _minimumFundingGoal, uint _weiCap) Crowdsale(_token, _pricingStrategy, _multisigWallet, _start, _end, _minimumFundingGoal) {
     weiCap = _weiCap;
   }
-
-  /**
-   * Called from invest() to confirm if the curret investment does not break our cap rule.
-   */
   function isBreakingCap(uint weiAmount, uint tokenAmount, uint weiRaisedTotal, uint tokensSoldTotal) constant returns (bool limitBroken) {
     return weiRaisedTotal > weiCap;
   }
@@ -761,10 +742,6 @@ contract MintedEthCappedCrowdsale is Crowdsale {
   function isCrowdsaleFull() public constant returns (bool) {
     return weiRaised >= weiCap;
   }
-
-  /**
-   * Dynamically create tokens and assign them to the investor.
-   */
   function assignTokens(address receiver, uint tokenAmount) private {
     MintableToken mintableToken = MintableToken(token);
     mintableToken.mint(receiver, tokenAmount);

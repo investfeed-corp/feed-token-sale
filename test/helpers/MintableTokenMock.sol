@@ -11,9 +11,9 @@ contract MintableTokenMock is MintableToken  {
   string public symbol;
   bool public mintable;
 
-  uint public decimals;
+  uint8 public decimals;
 
-  function MintableTokenMock(string _name, string _symbol, uint _initialSupply, uint _decimals, bool _mintable) {
+  function MintableTokenMock(string _name, string _symbol, uint _initialSupply, uint8 _decimals, bool _mintable) {
     owner = msg.sender;
     name = _name;
     symbol = _symbol;

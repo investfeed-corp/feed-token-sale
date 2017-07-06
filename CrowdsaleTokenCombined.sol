@@ -66,40 +66,49 @@ contract ERC20 is ERC20Basic {
 
 
 
-contract StandardToken is ERC20, SafeMathLib{
-  
+contract StandardToken is ERC20, SafeMathLib {
+  /* Token supply got increased and a new owner received these tokens */
   event Minted(address receiver, uint amount);
 
-  
+  /* Actual balances of token holders */
   mapping(address => uint) balances;
 
-  
+  /* approve() allowances */
   mapping (address => mapping (address => uint)) allowed;
 
-  modifier onlyPayloadSize(uint size) {
-     if(msg.data.length != size + 4) {
-       throw;
-     }
-     _;
-  }
-
-  function transfer(address _to, uint _value) onlyPayloadSize(2 * 32) returns (bool success) {
-   
-   
-    balances[msg.sender] = safeSub(balances[msg.sender],_value);
-    balances[_to] = safeAdd(balances[_to],_value);
-    Transfer(msg.sender, _to, _value);
-    return true;
+  function transfer(address _to, uint _value) returns (bool success) {
+    if (balances[msg.sender] >= _value 
+        && _value > 0 
+        && balances[_to] + _value > balances[_to]
+        ) {
+      balances[msg.sender] = safeSub(balances[msg.sender],_value);
+      balances[_to] = safeAdd(balances[_to],_value);
+      Transfer(msg.sender, _to, _value);
+      return true;
+    }
+    else{
+      return false;
+    }
+    
   }
 
   function transferFrom(address _from, address _to, uint _value) returns (bool success) {
     uint _allowance = allowed[_from][msg.sender];
 
+    if (balances[_from] >= _value   // From a/c has balance
+        && _allowance >= _value    // Transfer approved
+        && _value > 0              // Non-zero transfer
+        && balances[_to] + _value > balances[_to]  // Overflow check
+        ){
     balances[_to] = safeAdd(balances[_to],_value);
     balances[_from] = safeSub(balances[_from],_value);
     allowed[_from][msg.sender] = safeSub(_allowance,_value);
     Transfer(_from, _to, _value);
     return true;
+        }
+    else {
+      return false;
+    }
   }
 
   function balanceOf(address _owner) constant returns (uint balance) {
@@ -119,18 +128,16 @@ contract StandardToken is ERC20, SafeMathLib{
     return allowed[_owner][_spender];
   }
 
- function addApproval(address _spender, uint _addedValue)
-  onlyPayloadSize(2 * 32)
-  returns (bool success) {
+
+  function addApproval(address _spender, uint _addedValue) returns (bool success) {
       uint oldValue = allowed[msg.sender][_spender];
       allowed[msg.sender][_spender] = safeAdd(oldValue,_addedValue);
       Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
       return true;
   }
 
-  function subApproval(address _spender, uint _subtractedValue)
-  onlyPayloadSize(2 * 32)
-  returns (bool success) {
+
+  function subApproval(address _spender, uint _subtractedValue) returns (bool success) {
 
       uint oldVal = allowed[msg.sender][_spender];
 
@@ -370,9 +377,9 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
 
   string public symbol;
 
-  uint public decimals;
+  uint8 public decimals;
 
-  function CrowdsaleToken(string _name, string _symbol, uint _initialSupply, uint _decimals, bool _mintable)
+  function CrowdsaleToken(string _name, string _symbol, uint _initialSupply, uint8 _decimals, bool _mintable)
     UpgradeableToken(msg.sender) {
 
     owner = msg.sender;

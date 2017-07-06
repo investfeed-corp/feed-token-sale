@@ -43,7 +43,7 @@ contract ERC20 is ERC20Basic {
 
 contract FractionalERC20 is ERC20 {
 
-  uint public decimals;
+  uint8 public decimals;
 
 }
 
@@ -72,7 +72,7 @@ contract PricingStrategy {
   }
 
  
-  function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint decimals) public constant returns (uint tokenAmount);
+  function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint8 decimals) public constant returns (uint tokenAmount);
 }
 
 
@@ -435,7 +435,7 @@ contract EthTranchePricing is PricingStrategy, Ownable, SafeMathLib {
   function getCurrentPrice(uint weiRaised) public constant returns (uint result) {
     return getCurrentTranche(weiRaised).price;
   }
-  function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint decimals) public constant returns (uint) {
+  function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint8 decimals) public constant returns (uint) {
 
     uint multiplier = 10 ** decimals;
     if(preicoAddresses[msgSender] > 0) {

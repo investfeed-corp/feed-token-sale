@@ -11,9 +11,9 @@ contract UpgradeableTokenMock is StandardToken,UpgradeableToken  {
 
   string public symbol;
 
-  uint public decimals;
+  uint8 public decimals;
 
-  function UpgradeableTokenMock(string _name, string _symbol, uint _initialSupply, uint _decimals) 
+  function UpgradeableTokenMock(string _name, string _symbol, uint _initialSupply, uint8 _decimals) 
   UpgradeableToken (msg.sender){
     
     name = _name;
