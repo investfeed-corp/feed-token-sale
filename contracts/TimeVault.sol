@@ -31,8 +31,11 @@ contract TimeVault {
     unlockedAt = _unlockedAt;
 
     // Sanity check
-    if (teamMultisig == 0x0) throw;
-    if (address(token) == 0x0) throw;
+    require(teamMultisig != 0x0);
+    //if (teamMultisig == 0x0) throw;
+    
+    require(address(token) != 0x0);
+    //if (address(token) == 0x0) throw;
   }
 
   function getTokenBalance() public constant returns (uint) {
@@ -41,7 +44,8 @@ contract TimeVault {
 
   function unlock() public {
     // Wait your turn!
-    if (now < unlockedAt) throw;
+    require(now >= unlockedAt);
+    //if (now < unlockedAt) throw;
 
     // StandardToken will throw in the case of transaction fails
     token.transfer(teamMultisig, getTokenBalance());

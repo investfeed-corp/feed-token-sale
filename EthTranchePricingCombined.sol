@@ -1,7 +1,5 @@
 pragma solidity ^0.4.11;
-
 // Thanks to OpenZeppeline & TokenMarket for the awesome Libraries.
-
 contract Ownable {
   address public owner;
   address public newOwner;
@@ -11,7 +9,7 @@ contract Ownable {
   }
   modifier onlyOwner {
     require(msg.sender == owner);
-        _;
+    _;
   }
   function transferOwnership(address _newOwner) onlyOwner {
     newOwner = _newOwner;
@@ -22,6 +20,7 @@ contract Ownable {
     OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
+
 }
 
 contract ERC20Basic {
@@ -40,9 +39,7 @@ contract ERC20 is ERC20Basic {
 
 
 contract FractionalERC20 is ERC20 {
-
   uint8 public decimals;
-
 }
 
 contract FinalizeAgent {
@@ -50,32 +47,23 @@ contract FinalizeAgent {
   function isFinalizeAgent() public constant returns(bool) {
     return true;
   }
-
-
   function isSane() public constant returns (bool);
-
   function finalizeCrowdsale();
 
 }
 
 contract PricingStrategy {
-
   function isPricingStrategy() public constant returns (bool) {
     return true;
   }
-
-  
   function isSane(address crowdsale) public constant returns (bool) {
     return true;
   }
-
- 
   function calculatePrice(uint value, uint weiRaised, uint tokensSold, address msgSender, uint decimals) public constant returns (uint tokenAmount);
 }
 
 
 contract SafeMathLib {
-
   function safeMul(uint a, uint b) returns (uint) {
     uint c = a * b;
     assert(a == 0 || c / a == b);
@@ -92,29 +80,23 @@ contract SafeMathLib {
     assert(c>=a);
     return c;
   }
-
-  function assert(bool assertion) private {
-    if (!assertion) throw;
-  }
 }
 
 contract Haltable is Ownable {
   bool public halted;
 
   modifier stopInEmergency {
-    if (halted) throw;
+    require(!halted);
     _;
   }
 
   modifier onlyInEmergency {
-    if (!halted) throw;
+    require(halted);
     _;
   }
-
   function halt() external onlyOwner {
     halted = true;
   }
-
   function unhalt() external onlyOwner onlyInEmergency {
     halted = false;
   }
@@ -122,26 +104,15 @@ contract Haltable is Ownable {
 }
 
 contract Crowdsale is Haltable, SafeMathLib {
-
- 
   FractionalERC20 public token;
-
   PricingStrategy public pricingStrategy;
-
   FinalizeAgent public finalizeAgent;
-
   address public multisigWallet;
-
   uint public minimumFundingGoal;
-
   uint public startsAt;
-
   uint public endsAt;
-
   uint public tokensSold = 0;
-
   uint public weiRaised = 0;
-
   uint public investorCount = 0;
   uint public loadedRefund = 0;
   uint public weiRefunded = 0;
@@ -169,24 +140,16 @@ contract Crowdsale is Haltable, SafeMathLib {
     setPricingStrategy(_pricingStrategy);
 
     multisigWallet = _multisigWallet;
-    if(multisigWallet == 0) {
-        throw;
-    }
+    require(multisigWallet != 0);
 
-    if(_start == 0) {
-        throw;
-    }
+    require(_start != 0);
 
     startsAt = _start;
 
-    if(_end == 0) {
-        throw;
-    }
+    require(_end != 0);
 
     endsAt = _end;
-    if(startsAt >= endsAt) {
-        throw;
-    }
+    require(startsAt < endsAt);
     minimumFundingGoal = _minimumFundingGoal;
   }
   function() payable {
@@ -194,9 +157,7 @@ contract Crowdsale is Haltable, SafeMathLib {
   }
   function investInternal(address receiver, uint128 customerId) stopInEmergency private {
     if(getState() == State.PreFunding) {
-      if(!earlyParticipantWhitelist[receiver]) {
-        throw;
-      }
+      require(earlyParticipantWhitelist[receiver]);
     } else if(getState() == State.Funding) {
     } else {
       throw;
@@ -205,9 +166,7 @@ contract Crowdsale is Haltable, SafeMathLib {
     uint weiAmount = msg.value;
     uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised, tokensSold, msg.sender, token.decimals());
 
-    if(tokenAmount == 0) {
-      throw;
-    }
+    require(tokenAmount != 0);
 
     if(investedAmountOf[receiver] == 0) {
        investorCount++;
@@ -216,9 +175,7 @@ contract Crowdsale is Haltable, SafeMathLib {
     tokenAmountOf[receiver] = safeAdd(tokenAmountOf[receiver],tokenAmount);
     weiRaised = safeAdd(weiRaised,weiAmount);
     tokensSold = safeAdd(tokensSold,tokenAmount);
-    if(isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
-      throw;
-    }
+    require(!isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold));
 
     assignTokens(receiver, tokenAmount);
     if(!multisigWallet.send(weiAmount)) throw;
@@ -238,24 +195,17 @@ contract Crowdsale is Haltable, SafeMathLib {
     assignTokens(receiver, tokenAmount);
     Invested(receiver, weiAmount, tokenAmount, 0);
   }
-  function investWithSignedAddress(address addr, uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
-     bytes32 hash = sha256(addr);
-     if (ecrecover(hash, v, r, s) != signerAddress) throw;
-     if(customerId == 0) throw;
-     investInternal(addr, customerId);
-  }
   function investWithCustomerId(address addr, uint128 customerId) public payable {
-    if(requiredSignedAddress) throw;
-    if(customerId == 0) throw;
+    require(!requiredSignedAddress);
+    
+    require(customerId != 0);
     investInternal(addr, customerId);
   }
   function invest(address addr) public payable {
-    if(requireCustomerId) throw;
-    if(requiredSignedAddress) throw;
+    require(!requireCustomerId);
+    
+    require(!requiredSignedAddress);
     investInternal(addr, 0);
-  }
-  function buyWithSignedAddress(uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
-    investWithSignedAddress(msg.sender, customerId, v, r, s);
   }
   function buyWithCustomerId(uint128 customerId) public payable {
     investWithCustomerId(msg.sender, customerId);
@@ -264,9 +214,7 @@ contract Crowdsale is Haltable, SafeMathLib {
     invest(msg.sender);
   }
   function finalize() public inState(State.Success) onlyOwner stopInEmergency {
-    if(finalized) {
-      throw;
-    }
+    require(!finalized);
     if(address(finalizeAgent) != 0) {
       finalizeAgent.finalizeCrowdsale();
     }
@@ -275,17 +223,10 @@ contract Crowdsale is Haltable, SafeMathLib {
   }
   function setFinalizeAgent(FinalizeAgent addr) onlyOwner {
     finalizeAgent = addr;
-    if(!finalizeAgent.isFinalizeAgent()) {
-      throw;
-    }
+    require(finalizeAgent.isFinalizeAgent());
   }
   function setRequireCustomerId(bool value) onlyOwner {
     requireCustomerId = value;
-    InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
-  }
-  function setRequireSignedAddress(bool value, address _signerAddress) onlyOwner {
-    requiredSignedAddress = value;
-    signerAddress = _signerAddress;
     InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
   }
   function setEarlyParicipantWhitelist(address addr, bool status) onlyOwner {
@@ -303,17 +244,15 @@ contract Crowdsale is Haltable, SafeMathLib {
   }
   function setPricingStrategy(PricingStrategy _pricingStrategy) onlyOwner {
     pricingStrategy = _pricingStrategy;
-    if(!pricingStrategy.isPricingStrategy()) {
-      throw;
-    }
+    require(pricingStrategy.isPricingStrategy());
   }
   function loadRefund() public payable inState(State.Failure) {
-    if(msg.value == 0) throw;
+    require(msg.value != 0);
     loadedRefund = safeAdd(loadedRefund,msg.value);
   }
   function refund() public inState(State.Refunding) {
     uint256 weiValue = investedAmountOf[msg.sender];
-    if (weiValue == 0) throw;
+    require(weiValue != 0);
     investedAmountOf[msg.sender] = 0;
     weiRefunded = safeAdd(weiRefunded,weiValue);
     Refund(msg.sender, weiValue);
@@ -346,7 +285,7 @@ contract Crowdsale is Haltable, SafeMathLib {
     return true;
   }
   modifier inState(State state) {
-    if(getState() != state) throw;
+    require(getState() == state);
     _;
   }
   function isBreakingCap(uint weiAmount, uint tokenAmount, uint weiRaisedTotal, uint tokensSoldTotal) constant returns (bool limitBroken);
@@ -368,29 +307,17 @@ contract EthTranchePricing is PricingStrategy, Ownable, SafeMathLib {
   Tranche[10] public tranches;
   uint public trancheCount;
   function EthTranchePricing(uint[] _tranches) {
-    if(_tranches.length % 2 == 1 || _tranches.length >= MAX_TRANCHES*2) {
-      throw;
-    }
-
+    require(!(_tranches.length % 2 == 1 || _tranches.length >= MAX_TRANCHES*2));
     trancheCount = _tranches.length / 2;
-
     uint highestAmount = 0;
-
     for(uint i=0; i<_tranches.length/2; i++) {
       tranches[i].amount = _tranches[i*2];
       tranches[i].price = _tranches[i*2+1];
-      if((highestAmount != 0) && (tranches[i].amount <= highestAmount)) {
-        throw;
-      }
-
+      require(!((highestAmount != 0) && (tranches[i].amount <= highestAmount)));
       highestAmount = tranches[i].amount;
     }
-    if(tranches[0].amount != 0) {
-      throw;
-    }
-    if(tranches[trancheCount-1].price != 0) {
-      throw;
-    }
+    require(tranches[0].amount == 0);
+    require(tranches[trancheCount-1].price == 0);
   }
   function setPreicoAddress(address preicoAddress, uint pricePerToken)
     public
@@ -423,7 +350,6 @@ contract EthTranchePricing is PricingStrategy, Ownable, SafeMathLib {
   }
   function getCurrentTranche(uint weiRaised) private constant returns (Tranche) {
     uint i;
-
     for(i=0; i < tranches.length; i++) {
       if(weiRaised < tranches[i].amount) {
         return tranches[i-1];
@@ -437,11 +363,12 @@ contract EthTranchePricing is PricingStrategy, Ownable, SafeMathLib {
 
     uint multiplier = 10 ** decimals;
     if(preicoAddresses[msgSender] > 0) {
-      return safeMul(value,multiplier) / preicoAddresses[msgSender];
+      return safeMul(value, multiplier) / preicoAddresses[msgSender];
     }
 
     uint price = getCurrentPrice(weiRaised);
-    return safeMul(value,multiplier) / price;
+    
+    return safeMul(value, multiplier) / price;
   }
 
   function() payable {

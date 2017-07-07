@@ -38,9 +38,10 @@ contract MilestonePricing is PricingStrategy, Ownable, SafeMathLib {
   /// @param _milestones uint[] milestones Pairs of (time, price)
   function MilestonePricing(uint[] _milestones) {
     // Need to have tuples, length check
-    if(_milestones.length % 2 == 1 || _milestones.length >= MAX_MILESTONE*2) {
-      throw;
-    }
+    require(!(_milestones.length % 2 == 1 || _milestones.length >= MAX_MILESTONE*2));
+    // if(_milestones.length % 2 == 1 || _milestones.length >= MAX_MILESTONE*2) {
+    //   throw;
+    // }
 
     milestoneCount = _milestones.length / 2;
 
@@ -51,17 +52,19 @@ contract MilestonePricing is PricingStrategy, Ownable, SafeMathLib {
       milestones[i].price = _milestones[i*2+1];
 
       // No invalid steps
-      if((lastTimestamp != 0) && (milestones[i].time <= lastTimestamp)) {
-        throw;
-      }
+      require(!((lastTimestamp != 0) && (milestones[i].time <= lastTimestamp)));
+      // if((lastTimestamp != 0) && (milestones[i].time <= lastTimestamp)) {
+      //   throw;
+      // }
 
       lastTimestamp = milestones[i].time;
     }
 
     // Last milestone price must be zero, terminating the crowdale
-    if(milestones[milestoneCount-1].price != 0) {
-      throw;
-    }
+    require(milestones[milestoneCount-1].price == 0);
+    // if(milestones[milestoneCount-1].price != 0) {
+    //   throw;
+    // }
   }
 
   /// @dev This is invoked once for every pre-ICO address, set pricePerToken
@@ -127,11 +130,11 @@ contract MilestonePricing is PricingStrategy, Ownable, SafeMathLib {
 
     // This investor is coming through pre-ico
     if(preicoAddresses[msgSender] > 0) {
-      return safeMul(value,multiplier) / preicoAddresses[msgSender];
+      return safeMul(value, multiplier) / preicoAddresses[msgSender];
     }
 
     uint price = getCurrentPrice();
-    return safeMul(value,multiplier) / price;
+    return safeMul(value, multiplier) / price;
   }
 
   function() payable {

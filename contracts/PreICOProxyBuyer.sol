@@ -78,14 +78,16 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMathLib {
     owner = _owner;
 
     // Give argument
-    if(_freezeEndsAt == 0) {
-      throw;
-    }
+    require(_freezeEndsAt != 0);
+    // if(_freezeEndsAt == 0) {
+    //   throw;
+    // }
 
     // Give argument
-    if(_weiMinimumLimit == 0) {
-      throw;
-    }
+    require(_weiMinimumLimit != 0);
+    // if(_weiMinimumLimit == 0) {
+    //   throw;
+    // }
 
     weiMinimumLimit = _weiMinimumLimit;
     weiCap = _weiCap;
@@ -96,9 +98,10 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMathLib {
    * Get the token we are distributing.
    */
   function getToken() public constant returns(FractionalERC20) {
-    if(address(crowdsale) == 0)  {
-      throw;
-    }
+    require(address(crowdsale) != 0);
+    // if(address(crowdsale) == 0)  {
+    //   throw;
+    // }
 
     return crowdsale.token();
   }
@@ -109,9 +112,11 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMathLib {
   function invest() public stopInEmergency payable {
 
     // Cannot invest anymore through crowdsale when moving has begun
-    if(getState() != State.Funding) throw;
+    require(getState() == State.Funding);
+    //if(getState() != State.Funding) throw;
 
-    if(msg.value == 0) throw; // No empty buys
+    require(msg.value != 0);
+    //if(msg.value == 0) throw; // No empty buys
 
     address investor = msg.sender;
 
@@ -120,9 +125,10 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMathLib {
     balances[investor] = safeAdd(balances[investor], msg.value);
 
     // Need to fulfill minimum limit
-    if(balances[investor] < weiMinimumLimit) {
-      throw;
-    }
+    require(balances[investor] >= weiMinimumLimit);
+    // if(balances[investor] < weiMinimumLimit) {
+    //   throw;
+    // }
 
     // This is a new investor
     if(!existing) {
@@ -131,9 +137,10 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMathLib {
     }
 
     weiRaisedTotal = safeAdd(weiRaisedTotal, msg.value);
-    if(weiRaisedTotal > weiCap) {
-      throw;
-    }
+    require(weiRaisedTotal <= weiCap);
+    // if(weiRaisedTotal > weiCap) {
+    //   throw;
+    // }
 
     Invested(investor, msg.value);
   }
@@ -144,14 +151,15 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMathLib {
    *
    */
   function buyForEverybody() stopInEmergency public {
-
-    if(getState() != State.Funding) {
-      // Only allow buy once
-      throw;
-    }
+    require(getState() == State.Funding);
+    // if(getState() != State.Funding) {
+    //   // Only allow buy once
+    //   throw;
+    // }
 
     // Crowdsale not yet set
-    if(address(crowdsale) == 0) throw;
+    require(address(crowdsale) != 0);
+    //if(address(crowdsale) == 0) throw;
 
     // Buy tokens on the contract
     crowdsale.invest.value(weiRaisedTotal)(address(this));
@@ -159,10 +167,11 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMathLib {
     // Record how many tokens we got
     tokensBought = getToken().balanceOf(address(this));
 
-    if(tokensBought == 0) {
-      // Did not get any tokens
-      throw;
-    }
+    require(tokensBought != 0);
+    // if(tokensBought == 0) {
+    //   // Did not get any tokens
+    //   throw;
+    // }
 
     TokensBoughts(tokensBought);
   }
@@ -173,9 +182,10 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMathLib {
   function getClaimAmount(address investor) public constant returns (uint) {
 
     // Claims can be only made if we manage to buy tokens
-    if(getState() != State.Distributing) {
-      throw;
-    }
+    require(getState() == State.Distributing);
+    // if(getState() != State.Distributing) {
+    //   throw;
+    // }
     return safeMul(balances[investor], tokensBought) / weiRaisedTotal;
   }
 
@@ -200,14 +210,16 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMathLib {
   function claim(uint amount) stopInEmergency {
     address investor = msg.sender;
 
-    if(amount == 0) {
-      throw;
-    }
+    require(amount != 0);
+    // if(amount == 0) {
+    //   throw;
+    // }
 
-    if(getClaimLeft(investor) < amount) {
-      // Woops we cannot get more than we have left
-      throw;
-    }
+    require(getClaimLeft(investor) >= amount);
+    // if(getClaimLeft(investor) < amount) {
+    //   // Woops we cannot get more than we have left
+    //   throw;
+    // }
 
     // We track who many investor have (partially) claimed their tokens
     if(claimed[investor] == 0) {
@@ -227,10 +239,12 @@ contract PreICOProxyBuyer is Ownable, Haltable, SafeMathLib {
   function refund() stopInEmergency {
 
     // Trying to ask refund too soon
-    if(getState() != State.Refunding) throw;
+    require(getState() == State.Refunding);
+    //if(getState() != State.Refunding) throw;
 
     address investor = msg.sender;
-    if(balances[investor] == 0) throw;
+    require(balances[investor] != 0);
+    //if(balances[investor] == 0) throw;
     uint amount = balances[investor];
     delete balances[investor];
     if(!investor.send(amount)) throw;

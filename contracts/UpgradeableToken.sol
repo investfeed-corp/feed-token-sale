@@ -52,51 +52,56 @@ contract UpgradeableToken is StandardToken {
    * Allow the token holder to upgrade some of their tokens to a new contract.
    */
   function upgrade(uint256 value) public {
+    UpgradeState state = getUpgradeState();
+    require((state == UpgradeState.ReadyToUpgrade || state == UpgradeState.Upgrading));
+    // if(!(state == UpgradeState.ReadyToUpgrade || state == UpgradeState.Upgrading)) {
+    //   // Called in a bad state
+    //   throw;
+    // }
 
-      UpgradeState state = getUpgradeState();
-      if(!(state == UpgradeState.ReadyToUpgrade || state == UpgradeState.Upgrading)) {
-        // Called in a bad state
-        throw;
-      }
+    // Validate input value.
+    if (value == 0) throw;
 
-      // Validate input value.
-      if (value == 0) throw;
+    balances[msg.sender] = safeSub(balances[msg.sender],value);
 
-      balances[msg.sender] = safeSub(balances[msg.sender],value);
+    // Take tokens out from circulation
+    totalSupply = safeSub(totalSupply,value);
+    totalUpgraded = safeAdd(totalUpgraded,value);
 
-      // Take tokens out from circulation
-      totalSupply = safeSub(totalSupply,value);
-      totalUpgraded = safeAdd(totalUpgraded,value);
-
-      // Upgrade agent reissues the tokens
-      upgradeAgent.upgradeFrom(msg.sender, value);
-      Upgrade(msg.sender, upgradeAgent, value);
+    // Upgrade agent reissues the tokens
+    upgradeAgent.upgradeFrom(msg.sender, value);
+    Upgrade(msg.sender, upgradeAgent, value);
   }
 
   /**
    * Set an upgrade agent that handles
    */
   function setUpgradeAgent(address agent) external {
+    require(canUpgrade());
+    // if(!canUpgrade()) {
+    //   // The token is not yet in a state that we could think upgrading
+    //   throw;
+    // }
 
-      if(!canUpgrade()) {
-        // The token is not yet in a state that we could think upgrading
-        throw;
-      }
+    require(agent != 0x0);
+    //if (agent == 0x0) throw;
+    // Only a master can designate the next agent
+    require(msg.sender == upgradeMaster);
+    //if (msg.sender != upgradeMaster) throw;
+    // Upgrade has already begun for an agent
+    require(getUpgradeState() != UpgradeState.Upgrading);
+    //if (getUpgradeState() == UpgradeState.Upgrading) throw;
 
-      if (agent == 0x0) throw;
-      // Only a master can designate the next agent
-      if (msg.sender != upgradeMaster) throw;
-      // Upgrade has already begun for an agent
-      if (getUpgradeState() == UpgradeState.Upgrading) throw;
+    upgradeAgent = UpgradeAgent(agent);
 
-      upgradeAgent = UpgradeAgent(agent);
+    // Bad interface
+    require(upgradeAgent.isUpgradeAgent());
+    //if(!upgradeAgent.isUpgradeAgent()) throw;
+    // Make sure that token supplies match in source and target
+    require(upgradeAgent.originalSupply() == totalSupply);
+    //if (upgradeAgent.originalSupply() != totalSupply) throw;
 
-      // Bad interface
-      if(!upgradeAgent.isUpgradeAgent()) throw;
-      // Make sure that token supplies match in source and target
-      if (upgradeAgent.originalSupply() != totalSupply) throw;
-
-      UpgradeAgentSet(upgradeAgent);
+    UpgradeAgentSet(upgradeAgent);
   }
 
   /**
@@ -115,9 +120,11 @@ contract UpgradeableToken is StandardToken {
    * This allows us to set a new owner for the upgrade mechanism.
    */
   function setUpgradeMaster(address master) public {
-      if (master == 0x0) throw;
-      if (msg.sender != upgradeMaster) throw;
-      upgradeMaster = master;
+    require(master != 0x0);
+    //if (master == 0x0) throw;
+    require(msg.sender == upgradeMaster);
+    //if (msg.sender != upgradeMaster) throw;
+    upgradeMaster = master;
   }
 
   /**

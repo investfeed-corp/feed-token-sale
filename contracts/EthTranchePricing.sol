@@ -39,45 +39,40 @@ contract EthTranchePricing is PricingStrategy, Ownable, SafeMathLib {
   /// @dev Contruction, creating a list of tranches
   /// @param _tranches uint[] tranches Pairs of (start amount, price)
   function EthTranchePricing(uint[] _tranches) {
-
-
-// [ 0, 666666666666666,
-//   3000000000000000000000, 769230769230769,
-//   5000000000000000000000, 909090909090909,
-//   8000000000000000000000, 952380952380952,
-//   2000000000000000000000, 1000000000000000 ]
-
-
+    // [ 0, 666666666666666,
+    //   3000000000000000000000, 769230769230769,
+    //   5000000000000000000000, 909090909090909,
+    //   8000000000000000000000, 952380952380952,
+    //   2000000000000000000000, 1000000000000000 ]
     // Need to have tuples, length check
-    if(_tranches.length % 2 == 1 || _tranches.length >= MAX_TRANCHES*2) {
-      throw;
-    }
-
+    require(!(_tranches.length % 2 == 1 || _tranches.length >= MAX_TRANCHES*2));
+    // if(_tranches.length % 2 == 1 || _tranches.length >= MAX_TRANCHES*2) {
+    //   throw;
+    // }
     trancheCount = _tranches.length / 2;
-
     uint highestAmount = 0;
-
     for(uint i=0; i<_tranches.length/2; i++) {
       tranches[i].amount = _tranches[i*2];
       tranches[i].price = _tranches[i*2+1];
-
       // No invalid steps
-      if((highestAmount != 0) && (tranches[i].amount <= highestAmount)) {
-        throw;
-      }
-
+      require(!((highestAmount != 0) && (tranches[i].amount <= highestAmount)));
+      // if((highestAmount != 0) && (tranches[i].amount <= highestAmount)) {
+      //   throw;
+      // }
       highestAmount = tranches[i].amount;
     }
 
     // We need to start from zero, otherwise we blow up our deployment
-    if(tranches[0].amount != 0) {
-      throw;
-    }
+    require(tranches[0].amount == 0);
+    // if(tranches[0].amount != 0) {
+    //   throw;
+    // }
 
     // Last tranche price must be zero, terminating the crowdale
-    if(tranches[trancheCount-1].price != 0) {
-      throw;
-    }
+    require(tranches[trancheCount-1].price == 0);
+    // if(tranches[trancheCount-1].price != 0) {
+    //   throw;
+    // }
   }
 
   /// @dev This is invoked once for every pre-ICO address, set pricePerToken
@@ -126,7 +121,6 @@ contract EthTranchePricing is PricingStrategy, Ownable, SafeMathLib {
   /// @return {[type]} [description]
   function getCurrentTranche(uint weiRaised) private constant returns (Tranche) {
     uint i;
-
     for(i=0; i < tranches.length; i++) {
       if(weiRaised < tranches[i].amount) {
         return tranches[i-1];
@@ -148,12 +142,12 @@ contract EthTranchePricing is PricingStrategy, Ownable, SafeMathLib {
 
     // This investor is coming through pre-ico
     if(preicoAddresses[msgSender] > 0) {
-      return safeMul(value,multiplier) / preicoAddresses[msgSender];
+      return safeMul(value, multiplier) / preicoAddresses[msgSender];
     }
 
     uint price = getCurrentPrice(weiRaised);
     
-    return safeMul(value,multiplier) / price;
+    return safeMul(value, multiplier) / price;
   }
 
   function() payable {

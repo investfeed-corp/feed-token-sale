@@ -27,7 +27,6 @@ contract Ownable {
     _;
   }
 
-
   /**
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param _newOwner The address to transfer ownership to. 
@@ -41,5 +40,5 @@ contract Ownable {
     OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
-  
+
 }

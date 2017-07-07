@@ -65,7 +65,8 @@ contract StandardToken is ERC20, SafeMathLib {
     //  allowance to zero by calling `approve(_spender, 0)` if it is not
     //  already 0 to mitigate the race condition described here:
     //  https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
-    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
+    require(!((_value != 0) && (allowed[msg.sender][_spender] != 0)));
+    //if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
 
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
@@ -83,10 +84,10 @@ contract StandardToken is ERC20, SafeMathLib {
    *
    */
   function addApproval(address _spender, uint _addedValue) returns (bool success) {
-      uint oldValue = allowed[msg.sender][_spender];
-      allowed[msg.sender][_spender] = safeAdd(oldValue,_addedValue);
-      Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-      return true;
+    uint oldValue = allowed[msg.sender][_spender];
+    allowed[msg.sender][_spender] = safeAdd(oldValue,_addedValue);
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
   }
 
   /**
@@ -96,15 +97,15 @@ contract StandardToken is ERC20, SafeMathLib {
    */
   function subApproval(address _spender, uint _subtractedValue) returns (bool success) {
 
-      uint oldVal = allowed[msg.sender][_spender];
+    uint oldVal = allowed[msg.sender][_spender];
 
-      if (_subtractedValue > oldVal) {
-          allowed[msg.sender][_spender] = 0;
-      } else {
-          allowed[msg.sender][_spender] = safeSub(oldVal,_subtractedValue);
-      }
-      Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-      return true;
+    if (_subtractedValue > oldVal) {
+        allowed[msg.sender][_spender] = 0;
+    } else {
+        allowed[msg.sender][_spender] = safeSub(oldVal,_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
   }
 
 }

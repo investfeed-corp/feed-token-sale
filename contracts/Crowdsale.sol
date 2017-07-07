@@ -120,26 +120,30 @@ contract Crowdsale is Haltable, SafeMathLib {
     setPricingStrategy(_pricingStrategy);
 
     multisigWallet = _multisigWallet;
-    if(multisigWallet == 0) {
-        throw;
-    }
+    require(multisigWallet != 0);
+    // if(multisigWallet == 0) {
+    //     throw;
+    // }
 
-    if(_start == 0) {
-        throw;
-    }
+    require(_start != 0);
+    // if(_start == 0) {
+    //     throw;
+    // }
 
     startsAt = _start;
 
-    if(_end == 0) {
-        throw;
-    }
+    require(_end != 0);
+    // if(_end == 0) {
+    //     throw;
+    // }
 
     endsAt = _end;
 
     // Don't mess the dates
-    if(startsAt >= endsAt) {
-        throw;
-    }
+    require(startsAt < endsAt);
+    // if(startsAt >= endsAt) {
+    //     throw;
+    // }
 
     // Minimum funding goal can be zero
     minimumFundingGoal = _minimumFundingGoal;
@@ -167,9 +171,10 @@ contract Crowdsale is Haltable, SafeMathLib {
     // Determine if it's a good time to accept investment from this participant
     if(getState() == State.PreFunding) {
       // Are we whitelisted for early deposit
-      if(!earlyParticipantWhitelist[receiver]) {
-        throw;
-      }
+      require(earlyParticipantWhitelist[receiver]);
+      // if(!earlyParticipantWhitelist[receiver]) {
+      //   throw;
+      // }
     } else if(getState() == State.Funding) {
       // Retail participants can only come in when the crowdsale is running
       // pass
@@ -181,10 +186,11 @@ contract Crowdsale is Haltable, SafeMathLib {
     uint weiAmount = msg.value;
     uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised, tokensSold, msg.sender, token.decimals());
 
-    if(tokenAmount == 0) {
-      // Dust transaction
-      throw;
-    }
+    require(tokenAmount != 0);
+    // if(tokenAmount == 0) {
+    //   // Dust transaction
+    //   throw;
+    // }
 
     if(investedAmountOf[receiver] == 0) {
        // A new investor
@@ -200,9 +206,10 @@ contract Crowdsale is Haltable, SafeMathLib {
     tokensSold = safeAdd(tokensSold,tokenAmount);
 
     // Check that we did not bust the cap
-    if(isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
-      throw;
-    }
+    require(!isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold));
+    // if(isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
+    //   throw;
+    // }
 
     assignTokens(receiver, tokenAmount);
 
@@ -251,7 +258,8 @@ contract Crowdsale is Haltable, SafeMathLib {
   // function investWithSignedAddress(address addr, uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
   //    bytes32 hash = sha256(addr);
   //    if (ecrecover(hash, v, r, s) != signerAddress) throw;
-  //    if(customerId == 0) throw;  // UUIDv4 sanity check
+  //    require(customerId != 0);
+  //    //if(customerId == 0) throw;  // UUIDv4 sanity check
   //    investInternal(addr, customerId);
   // }
 
@@ -259,8 +267,11 @@ contract Crowdsale is Haltable, SafeMathLib {
    * Track who is the customer making the payment so we can send thank you email.
    */
   function investWithCustomerId(address addr, uint128 customerId) public payable {
-    if(requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
-    if(customerId == 0) throw;  // UUIDv4 sanity check
+    require(!requiredSignedAddress);
+    //if(requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
+    
+    require(customerId != 0);
+    //if(customerId == 0) throw;  // UUIDv4 sanity check
     investInternal(addr, customerId);
   }
 
@@ -268,8 +279,11 @@ contract Crowdsale is Haltable, SafeMathLib {
    * Allow anonymous contributions to this crowdsale.
    */
   function invest(address addr) public payable {
-    if(requireCustomerId) throw; // Crowdsale needs to track partipants for thank you email
-    if(requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
+    require(!requireCustomerId);
+    //if(requireCustomerId) throw; // Crowdsale needs to track partipants for thank you email
+    
+    require(!requiredSignedAddress);
+    //if(requiredSignedAddress) throw; // Crowdsale allows only server-side signed participants
     investInternal(addr, 0);
   }
 
@@ -307,9 +321,10 @@ contract Crowdsale is Haltable, SafeMathLib {
   function finalize() public inState(State.Success) onlyOwner stopInEmergency {
 
     // Already finalized
-    if(finalized) {
-      throw;
-    }
+    require(!finalized);
+    // if(finalized) {
+    //   throw;
+    // }
 
     // Finalizing is optional. We only call it if we are given a finalizing agent.
     if(address(finalizeAgent) != 0) {
@@ -328,9 +343,10 @@ contract Crowdsale is Haltable, SafeMathLib {
     finalizeAgent = addr;
 
     // Don't allow setting bad agent
-    if(!finalizeAgent.isFinalizeAgent()) {
-      throw;
-    }
+    require(finalizeAgent.isFinalizeAgent());
+    // if(!finalizeAgent.isFinalizeAgent()) {
+    //   throw;
+    // }
   }
 
   /**
@@ -393,9 +409,10 @@ contract Crowdsale is Haltable, SafeMathLib {
     pricingStrategy = _pricingStrategy;
 
     // Don't allow setting bad agent
-    if(!pricingStrategy.isPricingStrategy()) {
-      throw;
-    }
+    require(pricingStrategy.isPricingStrategy());
+    // if(!pricingStrategy.isPricingStrategy()) {
+    //   throw;
+    // }
   }
 
   /**
@@ -404,7 +421,8 @@ contract Crowdsale is Haltable, SafeMathLib {
    * The team can transfer the funds back on the smart contract in the case the minimum goal was not reached..
    */
   function loadRefund() public payable inState(State.Failure) {
-    if(msg.value == 0) throw;
+    require(msg.value != 0);
+    //if(msg.value == 0) throw;
     loadedRefund = safeAdd(loadedRefund,msg.value);
   }
 
@@ -413,7 +431,8 @@ contract Crowdsale is Haltable, SafeMathLib {
    */
   function refund() public inState(State.Refunding) {
     uint256 weiValue = investedAmountOf[msg.sender];
-    if (weiValue == 0) throw;
+    require(weiValue != 0);
+    //if (weiValue == 0) throw;
     investedAmountOf[msg.sender] = 0;
     weiRefunded = safeAdd(weiRefunded,weiValue);
     Refund(msg.sender, weiValue);
@@ -474,7 +493,8 @@ contract Crowdsale is Haltable, SafeMathLib {
 
   /** Modified allowing execution only if the crowdsale is currently running.  */
   modifier inState(State state) {
-    if(getState() != state) throw;
+    require(getState() == state);
+    //if(getState() != state) throw;
     _;
   }
 
@@ -499,7 +519,6 @@ contract Crowdsale is Haltable, SafeMathLib {
    * @return true if taking this investment would break our cap rules
    */
   function isBreakingCap(uint weiAmount, uint tokenAmount, uint weiRaisedTotal, uint tokensSoldTotal) constant returns (bool limitBroken);
-
   /**
    * Check if the current crowdsale is full and we can no longer sell any tokens.
    */

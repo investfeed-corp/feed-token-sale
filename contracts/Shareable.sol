@@ -1,6 +1,4 @@
 pragma solidity ^0.4.11;
-
-
 /**
  * @title Shareable
  * @dev inheritable "property" contract that enables methods to be protected by requiring the 
@@ -36,9 +34,10 @@ contract Shareable {
 
   // simple single-sig function modifier.
   modifier onlyOwner {
-    if (!isOwner(msg.sender)) {
-      throw;
-    }
+    require(isOwner(msg.sender));
+    // if (!isOwner(msg.sender)) {
+    //   throw;
+    // }
     _;
   }
   
@@ -67,9 +66,10 @@ contract Shareable {
       ownerIndex[_owners[i]] = 2 + i;
     }
     required = _required;
-    if (required > owners.length) {
-      throw;
-    }
+    require(required <= owners.length);
+    // if (required > owners.length) {
+    //   throw;
+    // }
   }
 
   /**
@@ -138,9 +138,10 @@ contract Shareable {
     // determine what index the present sender is:
     uint index = ownerIndex[msg.sender];
     // make sure they're an owner
-    if (index == 0) {
-      throw;
-    }
+    require(index!=0);
+    // if (index == 0) {
+    //   throw;
+    // }
 
     var pending = pendings[_operation];
     // if we're not yet working on this operation, switch over and reset the confirmation status.

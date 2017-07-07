@@ -1,7 +1,6 @@
 pragma solidity ^0.4.11;
 // Thanks to OpenZeppeline & TokenMarket for the awesome Libraries.
- contract SafeMathLib {
-
+contract SafeMathLib {
   function safeMul(uint a, uint b) returns (uint) {
     uint c = a * b;
     assert(a == 0 || c / a == b);
@@ -18,10 +17,6 @@ pragma solidity ^0.4.11;
     assert(c>=a);
     return c;
   }
-
-  function assert(bool assertion) private {
-    if (!assertion) throw;
-  }
 }
 
 contract Ownable {
@@ -33,7 +28,7 @@ contract Ownable {
   }
   modifier onlyOwner {
     require(msg.sender == owner);
-        _;
+    _;
   }
   function transferOwnership(address _newOwner) onlyOwner {
     newOwner = _newOwner;
@@ -44,6 +39,7 @@ contract Ownable {
     OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
+
 }
 
 
@@ -62,9 +58,7 @@ contract ERC20 is ERC20Basic {
 }
 
 contract FractionalERC20 is ERC20 {
-
   uint8 public decimals;
-
 }
 
 contract StandardToken is ERC20, SafeMathLib {
@@ -112,7 +106,7 @@ contract StandardToken is ERC20, SafeMathLib {
   }
 
   function approve(address _spender, uint _value) returns (bool success) {
-    if ((_value != 0) && (allowed[msg.sender][_spender] != 0)) throw;
+    require(!((_value != 0) && (allowed[msg.sender][_spender] != 0)));
 
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
@@ -130,124 +124,76 @@ contract StandardToken is ERC20, SafeMathLib {
   }
   function subApproval(address _spender, uint _subtractedValue) returns (bool success) {
 
-      uint oldVal = allowed[msg.sender][_spender];
+    uint oldVal = allowed[msg.sender][_spender];
 
-      if (_subtractedValue > oldVal) {
-          allowed[msg.sender][_spender] = 0;
-      } else {
-          allowed[msg.sender][_spender] = safeSub(oldVal,_subtractedValue);
-      }
-      Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
-      return true;
+    if (_subtractedValue > oldVal) {
+        allowed[msg.sender][_spender] = 0;
+    } else {
+        allowed[msg.sender][_spender] = safeSub(oldVal,_subtractedValue);
+    }
+    Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
+    return true;
   }
 
 }
 
 
-
-
 contract UpgradeAgent {
-
   uint public originalSupply;
-
-  
   function isUpgradeAgent() public constant returns (bool) {
     return true;
   }
-
   function upgradeFrom(address _from, uint256 _value) public;
-
 }
 
 
 
  contract UpgradeableToken is StandardToken {
-
-  
   address public upgradeMaster;
-
-  
   UpgradeAgent public upgradeAgent;
-
-  
   uint256 public totalUpgraded;
-
-  
   enum UpgradeState {Unknown, NotAllowed, WaitingForAgent, ReadyToUpgrade, Upgrading}
-
-  
   event Upgrade(address indexed _from, address indexed _to, uint256 _value);
-
-  
   event UpgradeAgentSet(address agent);
-
-  
   function UpgradeableToken(address _upgradeMaster) {
     upgradeMaster = _upgradeMaster;
   }
-
-  
   function upgrade(uint256 value) public {
+    UpgradeState state = getUpgradeState();
+    require((state == UpgradeState.ReadyToUpgrade || state == UpgradeState.Upgrading));
+    if (value == 0) throw;
 
-      UpgradeState state = getUpgradeState();
-      if(!(state == UpgradeState.ReadyToUpgrade || state == UpgradeState.Upgrading)) {
-        
-        throw;
-      }
-
-      
-      if (value == 0) throw;
-
-      balances[msg.sender] = safeSub(balances[msg.sender],value);
-
-      
-      totalSupply = safeSub(totalSupply,value);
-      totalUpgraded = safeAdd(totalUpgraded,value);
-
-      
-      upgradeAgent.upgradeFrom(msg.sender, value);
-      Upgrade(msg.sender, upgradeAgent, value);
+    balances[msg.sender] = safeSub(balances[msg.sender],value);
+    totalSupply = safeSub(totalSupply,value);
+    totalUpgraded = safeAdd(totalUpgraded,value);
+    upgradeAgent.upgradeFrom(msg.sender, value);
+    Upgrade(msg.sender, upgradeAgent, value);
   }
 
- 
   function setUpgradeAgent(address agent) external {
+    require(canUpgrade());
 
-      if(!canUpgrade()) {
-        
-        throw;
-      }
+    require(agent != 0x0);
+    require(msg.sender == upgradeMaster);
+    require(getUpgradeState() != UpgradeState.Upgrading);
 
-      if (agent == 0x0) throw;
-      
-      if (msg.sender != upgradeMaster) throw;
-      
-      if (getUpgradeState() == UpgradeState.Upgrading) throw;
+    upgradeAgent = UpgradeAgent(agent);
+    require(upgradeAgent.isUpgradeAgent());
+    require(upgradeAgent.originalSupply() == totalSupply);
 
-      upgradeAgent = UpgradeAgent(agent);
-
-      
-      if(!upgradeAgent.isUpgradeAgent()) throw;
-      
-      if (upgradeAgent.originalSupply() != totalSupply) throw;
-
-      UpgradeAgentSet(upgradeAgent);
+    UpgradeAgentSet(upgradeAgent);
   }
-
   function getUpgradeState() public constant returns(UpgradeState) {
     if(!canUpgrade()) return UpgradeState.NotAllowed;
     else if(address(upgradeAgent) == 0x00) return UpgradeState.WaitingForAgent;
     else if(totalUpgraded == 0) return UpgradeState.ReadyToUpgrade;
     else return UpgradeState.Upgrading;
   }
-
-  
   function setUpgradeMaster(address master) public {
-      if (master == 0x0) throw;
-      if (msg.sender != upgradeMaster) throw;
-      upgradeMaster = master;
+    require(master != 0x0);
+    require(msg.sender == upgradeMaster);
+    upgradeMaster = master;
   }
-
-  
   function canUpgrade() public constant returns(bool) {
      return true;
   }
@@ -255,67 +201,42 @@ contract UpgradeAgent {
 }
 
 
+
 contract ReleasableToken is ERC20, Ownable {
-
-  
   address public releaseAgent;
-
-  
   bool public released = false;
-
-  
   mapping (address => bool) public transferAgents;
-
-
   modifier canTransfer(address _sender) {
 
     if(!released) {
-        if(!transferAgents[_sender]) {
-            throw;
-        }
+        require(transferAgents[_sender]);
     }
 
     _;
   }
-
-
   function setReleaseAgent(address addr) onlyOwner inReleaseState(false) public {
     releaseAgent = addr;
   }
-
-
   function setTransferAgent(address addr, bool state) onlyOwner inReleaseState(false) public {
     transferAgents[addr] = state;
   }
-
-
   function releaseTokenTransfer() public onlyReleaseAgent {
     released = true;
   }
-
-  
   modifier inReleaseState(bool releaseState) {
-    if(releaseState != released) {
-        throw;
-    }
+    require(releaseState == released);
     _;
   }
-
-  
   modifier onlyReleaseAgent() {
-    if(msg.sender != releaseAgent) {
-        throw;
-    }
+    require(msg.sender == releaseAgent);
     _;
   }
 
   function transfer(address _to, uint _value) canTransfer(msg.sender) returns (bool success) {
-    
    return super.transfer(_to, _value);
   }
 
   function transferFrom(address _from, address _to, uint _value) canTransfer(_from) returns (bool success) {
-    
     return super.transferFrom(_from, _to, _value);
   }
 
@@ -324,38 +245,25 @@ contract ReleasableToken is ERC20, Ownable {
 contract MintableToken is StandardToken, Ownable {
 
   bool public mintingFinished = false;
-
-  
   mapping (address => bool) public mintAgents;
 
   event MintingAgentChanged(address addr, bool state  );
-
-
   function mint(address receiver, uint amount) onlyMintAgent canMint public {
-    totalSupply = safeAdd(totalSupply,amount);
-    balances[receiver] = safeAdd(balances[receiver],amount);
-
-
+    totalSupply = safeAdd(totalSupply, amount);
+    balances[receiver] = safeAdd(balances[receiver], amount);
     Transfer(0, receiver, amount);
   }
-
-
   function setMintAgent(address addr, bool state) onlyOwner canMint public {
     mintAgents[addr] = state;
     MintingAgentChanged(addr, state);
   }
 
   modifier onlyMintAgent() {
-    
-    if(!mintAgents[msg.sender]) {
-        throw;
-    }
+    require(mintAgents[msg.sender]);
     _;
   }
-
-  
   modifier canMint() {
-    if(mintingFinished) throw;
+    require(!mintingFinished);
     _;
   }
 }
@@ -370,10 +278,8 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
   string public symbol;
 
   uint8 public decimals;
-
   function CrowdsaleToken(string _name, string _symbol, uint _initialSupply, uint8 _decimals, bool _mintable)
     UpgradeableToken(msg.sender) {
-
     owner = msg.sender;
 
     name = _name;
@@ -382,39 +288,26 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
     totalSupply = _initialSupply;
 
     decimals = _decimals;
-
-    
     balances[owner] = totalSupply;
 
     if(totalSupply > 0) {
       Minted(owner, totalSupply);
     }
-
-    
     if(!_mintable) {
       mintingFinished = true;
-      if(totalSupply == 0) {
-        throw; 
-      }
+      require(totalSupply != 0);
     }
   }
-
-
   function releaseTokenTransfer() public onlyReleaseAgent {
     mintingFinished = true;
     super.releaseTokenTransfer();
   }
-
-
   function canUpgrade() public constant returns(bool) {
     return released && super.canUpgrade();
   }
-
-
   function setTokenInformation(string _name, string _symbol) onlyOwner {
     name = _name;
     symbol = _symbol;
-
     UpdatedTokenInformation(name, symbol);
   }
 
@@ -435,7 +328,7 @@ contract FinalizeAgent {
 
 
 
- contract PricingStrategy {
+contract PricingStrategy {
   function isPricingStrategy() public constant returns (bool) {
     return true;
   }
@@ -449,16 +342,16 @@ contract FinalizeAgent {
 
 
 
- contract Haltable is Ownable {
+contract Haltable is Ownable {
   bool public halted;
 
   modifier stopInEmergency {
-    if (halted) throw;
+    require(!halted);
     _;
   }
 
   modifier onlyInEmergency {
-    if (!halted) throw;
+    require(halted);
     _;
   }
   function halt() external onlyOwner {
@@ -509,24 +402,16 @@ contract Crowdsale is Haltable, SafeMathLib {
     setPricingStrategy(_pricingStrategy);
 
     multisigWallet = _multisigWallet;
-    if(multisigWallet == 0) {
-        throw;
-    }
+    require(multisigWallet != 0);
 
-    if(_start == 0) {
-        throw;
-    }
+    require(_start != 0);
 
     startsAt = _start;
 
-    if(_end == 0) {
-        throw;
-    }
+    require(_end != 0);
 
     endsAt = _end;
-    if(startsAt >= endsAt) {
-        throw;
-    }
+    require(startsAt < endsAt);
     minimumFundingGoal = _minimumFundingGoal;
   }
   function() payable {
@@ -534,9 +419,7 @@ contract Crowdsale is Haltable, SafeMathLib {
   }
   function investInternal(address receiver, uint128 customerId) stopInEmergency private {
     if(getState() == State.PreFunding) {
-      if(!earlyParticipantWhitelist[receiver]) {
-        throw;
-      }
+      require(earlyParticipantWhitelist[receiver]);
     } else if(getState() == State.Funding) {
     } else {
       throw;
@@ -545,9 +428,7 @@ contract Crowdsale is Haltable, SafeMathLib {
     uint weiAmount = msg.value;
     uint tokenAmount = pricingStrategy.calculatePrice(weiAmount, weiRaised, tokensSold, msg.sender, token.decimals());
 
-    if(tokenAmount == 0) {
-      throw;
-    }
+    require(tokenAmount != 0);
 
     if(investedAmountOf[receiver] == 0) {
        investorCount++;
@@ -556,9 +437,7 @@ contract Crowdsale is Haltable, SafeMathLib {
     tokenAmountOf[receiver] = safeAdd(tokenAmountOf[receiver],tokenAmount);
     weiRaised = safeAdd(weiRaised,weiAmount);
     tokensSold = safeAdd(tokensSold,tokenAmount);
-    if(isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold)) {
-      throw;
-    }
+    require(!isBreakingCap(weiAmount, tokenAmount, weiRaised, tokensSold));
 
     assignTokens(receiver, tokenAmount);
     if(!multisigWallet.send(weiAmount)) throw;
@@ -578,24 +457,17 @@ contract Crowdsale is Haltable, SafeMathLib {
     assignTokens(receiver, tokenAmount);
     Invested(receiver, weiAmount, tokenAmount, 0);
   }
-  function investWithSignedAddress(address addr, uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
-     bytes32 hash = sha256(addr);
-     if (ecrecover(hash, v, r, s) != signerAddress) throw;
-     if(customerId == 0) throw;
-     investInternal(addr, customerId);
-  }
   function investWithCustomerId(address addr, uint128 customerId) public payable {
-    if(requiredSignedAddress) throw;
-    if(customerId == 0) throw;
+    require(!requiredSignedAddress);
+    
+    require(customerId != 0);
     investInternal(addr, customerId);
   }
   function invest(address addr) public payable {
-    if(requireCustomerId) throw;
-    if(requiredSignedAddress) throw;
+    require(!requireCustomerId);
+    
+    require(!requiredSignedAddress);
     investInternal(addr, 0);
-  }
-  function buyWithSignedAddress(uint128 customerId, uint8 v, bytes32 r, bytes32 s) public payable {
-    investWithSignedAddress(msg.sender, customerId, v, r, s);
   }
   function buyWithCustomerId(uint128 customerId) public payable {
     investWithCustomerId(msg.sender, customerId);
@@ -604,9 +476,7 @@ contract Crowdsale is Haltable, SafeMathLib {
     invest(msg.sender);
   }
   function finalize() public inState(State.Success) onlyOwner stopInEmergency {
-    if(finalized) {
-      throw;
-    }
+    require(!finalized);
     if(address(finalizeAgent) != 0) {
       finalizeAgent.finalizeCrowdsale();
     }
@@ -615,17 +485,10 @@ contract Crowdsale is Haltable, SafeMathLib {
   }
   function setFinalizeAgent(FinalizeAgent addr) onlyOwner {
     finalizeAgent = addr;
-    if(!finalizeAgent.isFinalizeAgent()) {
-      throw;
-    }
+    require(finalizeAgent.isFinalizeAgent());
   }
   function setRequireCustomerId(bool value) onlyOwner {
     requireCustomerId = value;
-    InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
-  }
-  function setRequireSignedAddress(bool value, address _signerAddress) onlyOwner {
-    requiredSignedAddress = value;
-    signerAddress = _signerAddress;
     InvestmentPolicyChanged(requireCustomerId, requiredSignedAddress, signerAddress);
   }
   function setEarlyParicipantWhitelist(address addr, bool status) onlyOwner {
@@ -643,17 +506,15 @@ contract Crowdsale is Haltable, SafeMathLib {
   }
   function setPricingStrategy(PricingStrategy _pricingStrategy) onlyOwner {
     pricingStrategy = _pricingStrategy;
-    if(!pricingStrategy.isPricingStrategy()) {
-      throw;
-    }
+    require(pricingStrategy.isPricingStrategy());
   }
   function loadRefund() public payable inState(State.Failure) {
-    if(msg.value == 0) throw;
+    require(msg.value != 0);
     loadedRefund = safeAdd(loadedRefund,msg.value);
   }
   function refund() public inState(State.Refunding) {
     uint256 weiValue = investedAmountOf[msg.sender];
-    if (weiValue == 0) throw;
+    require(weiValue != 0);
     investedAmountOf[msg.sender] = 0;
     weiRefunded = safeAdd(weiRefunded,weiValue);
     Refund(msg.sender, weiValue);
@@ -686,7 +547,7 @@ contract Crowdsale is Haltable, SafeMathLib {
     return true;
   }
   modifier inState(State state) {
-    if(getState() != state) throw;
+    require(getState() == state);
     _;
   }
   function isBreakingCap(uint weiAmount, uint tokenAmount, uint weiRaisedTotal, uint tokensSoldTotal) constant returns (bool limitBroken);
@@ -695,7 +556,8 @@ contract Crowdsale is Haltable, SafeMathLib {
 }
 
 
-contract BonusFinalizeAgent is FinalizeAgent,SafeMathLib {
+
+contract BonusFinalizeAgent is FinalizeAgent, SafeMathLib {
 
   CrowdsaleToken public token;
   Crowdsale public crowdsale;
@@ -708,20 +570,16 @@ contract BonusFinalizeAgent is FinalizeAgent,SafeMathLib {
   function BonusFinalizeAgent(CrowdsaleToken _token, Crowdsale _crowdsale, uint[] _bonusBasePoints, address[] _teamAddresses) {
     token = _token;
     crowdsale = _crowdsale;
-    if(address(crowdsale) == 0) {
-      throw;
-    }
-    if(_bonusBasePoints.length != _teamAddresses.length){
-      throw;
-    }
+    require(address(crowdsale) != 0);
+    require(_bonusBasePoints.length == _teamAddresses.length);
 
     totalMembers = _teamAddresses.length;
     teamAddresses = _teamAddresses;
     for (uint i=0;i<totalMembers;i++){
-      if(_bonusBasePoints[i] == 0) throw;
+      require(_bonusBasePoints[i] != 0);
     }
     for (uint j=0;j<totalMembers;j++){
-      if(_teamAddresses[j] == 0) throw;
+      require(_teamAddresses[j] != 0);
       bonusOf[_teamAddresses[j]] = _bonusBasePoints[j];
     }
   }
@@ -729,16 +587,15 @@ contract BonusFinalizeAgent is FinalizeAgent,SafeMathLib {
     return (token.mintAgents(address(this)) == true) && (token.releaseAgent() == address(this));
   }
   function finalizeCrowdsale() {
-    if(msg.sender != address(crowdsale)) {
-      throw;
-    }
+    require(msg.sender == address(crowdsale));
     uint tokensSold = crowdsale.tokensSold();
 
     for (uint i=0;i<totalMembers;i++){
-      allocatedBonus = safeMul(tokensSold,bonusOf[teamAddresses[i]]) / 10000;
+      allocatedBonus = safeMul(tokensSold, bonusOf[teamAddresses[i]]) / 10000;
       token.mint(teamAddresses[i], allocatedBonus);
     }
     token.releaseTokenTransfer();
   }
 
 }
+

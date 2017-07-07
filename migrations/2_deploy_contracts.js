@@ -78,13 +78,14 @@ module.exports = function(deployer, network, accounts) {
     // set BonusFinalizeAgent parameters
     // 2% to each member. 
     // Number of entries count must match with the count of _teamAddresses members
-    var _teamBonusPoints = [150, 150, 150, 25, 25, 75, 75];
+    var _teamBonusPoints;
 
     // list of team mebers address respective to the above percentage.
     // alternatively you can just get all the bonus in one account & then distribute 
     // using some MultiSigWallet manually
     var _teamAddresses;
     if (network == "testrpc") {
+        _teamBonusPoints = [150, 150, 150, 25, 25, 75, 75];
         _teamAddresses = [
             "0x22283B7315dd4B1741676e092279fc4F46ecC003",
             "0xf1BdA8f06191bC29F46d0ee3CBF68555A478a217",
@@ -95,6 +96,7 @@ module.exports = function(deployer, network, accounts) {
             "0x6c750dA8df323D53eed6812a7AFB834B0752e94c"
         ];
     } else if (network == "ropsten") {
+        _teamBonusPoints = [150, 150, 150];
         var aliceRopsten = "0x00568Fa85228C66111E3181085df48681273cD77";
         var bobRopsten = "0x00B600dE56F7570AEE3d57fe55E0462e51ca5280";
         var eveRopsten = "0x00F131eD217EC029732235A96EEEe044555CEd4d";
@@ -104,6 +106,7 @@ module.exports = function(deployer, network, accounts) {
         // you have to manually specify this 
         // before you deploy this in mainnet
         // or else this deployment will fail
+        _teamBonusPoints = [150, 150, 150];
         var member1 = 0x00;
         var member2 = 0x00;
         var member3 = 0x00;

@@ -26,8 +26,8 @@ contract MintableToken is StandardToken, Ownable {
    * Only callably by a crowdsale contract (mint agent).
    */
   function mint(address receiver, uint amount) onlyMintAgent canMint public {
-    totalSupply = safeAdd(totalSupply,amount);
-    balances[receiver] = safeAdd(balances[receiver],amount);
+    totalSupply = safeAdd(totalSupply, amount);
+    balances[receiver] = safeAdd(balances[receiver], amount);
 
     // This will make the mint transaction apper in EtherScan.io
     // We can remove this after there is a standardized minting event
@@ -44,15 +44,17 @@ contract MintableToken is StandardToken, Ownable {
 
   modifier onlyMintAgent() {
     // Only crowdsale contracts are allowed to mint new tokens
-    if(!mintAgents[msg.sender]) {
-        throw;
-    }
+    require(mintAgents[msg.sender]);
+    // if(!mintAgents[msg.sender]) {
+    //     throw;
+    // }
     _;
   }
 
   /** Make sure we are not done yet. */
   modifier canMint() {
-    if(mintingFinished) throw;
+    require(!mintingFinished);
+    //if(mintingFinished) throw;
     _;
   }
 }

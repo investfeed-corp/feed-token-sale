@@ -63,9 +63,10 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
     // No more new supply allowed after the token creation
     if(!_mintable) {
       mintingFinished = true;
-      if(totalSupply == 0) {
-        throw; // Cannot create a token without supply and no minting
-      }
+      require(totalSupply != 0);
+      // if(totalSupply == 0) {
+      //   throw; // Cannot create a token without supply and no minting
+      // }
     }
   }
 
@@ -90,7 +91,6 @@ contract CrowdsaleToken is ReleasableToken, MintableToken, UpgradeableToken {
   function setTokenInformation(string _name, string _symbol) onlyOwner {
     name = _name;
     symbol = _symbol;
-
     UpdatedTokenInformation(name, symbol);
   }
 

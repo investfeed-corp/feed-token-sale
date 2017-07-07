@@ -33,14 +33,16 @@ contract ExtraFinalizeAgent is FinalizeAgent, SafeMathLib {
     token = _token;
     crowdsale = _crowdsale;
 
-    if(address(crowdsale) == 0) {
-      throw;
-    }
+    require(address(crowdsale) != 0);
+    // if(address(crowdsale) == 0) {
+    //   throw;
+    // }
 
     teamMultisig = _teamMultisig;
-    if(address(teamMultisig) == 0) {
-      throw;
-    }
+    require(address(teamMultisig) != 0);
+    // if(address(teamMultisig) == 0) {
+    //   throw;
+    // }
 
     accountedTokenSales = _accountedTokenSales;
   }
@@ -52,13 +54,14 @@ contract ExtraFinalizeAgent is FinalizeAgent, SafeMathLib {
 
   /** Called once by crowdsale finalize() if the sale was success. */
   function finalizeCrowdsale() {
-    if(msg.sender != address(crowdsale)) {
-      throw;
-    }
+    require(msg.sender == address(crowdsale));
+    // if(msg.sender != address(crowdsale)) {
+    //   throw;
+    // }
 
     // How many % of tokens the founders and others get
-    uint tokensSold = safeSub(crowdsale.tokensSold(),accountedTokenSales);
-    allocatedBonus = safeMul(tokensSold,bonusBasePoints) / 10000;
+    uint tokensSold = safeSub(crowdsale.tokensSold(), accountedTokenSales);
+    allocatedBonus = safeMul(tokensSold, bonusBasePoints) / 10000;
 
     // move tokens to the team multisig wallet
     token.mint(teamMultisig, allocatedBonus);

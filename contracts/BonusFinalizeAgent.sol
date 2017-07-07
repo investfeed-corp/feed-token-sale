@@ -12,7 +12,7 @@ import "./SafeMathLib.sol";
  * BonusAllocationFinal must be set as the minting agent for the MintableToken.
  *
  */
-contract BonusFinalizeAgent is FinalizeAgent,SafeMathLib {
+contract BonusFinalizeAgent is FinalizeAgent, SafeMathLib {
 
   CrowdsaleToken public token;
   Crowdsale public crowdsale;
@@ -28,14 +28,12 @@ contract BonusFinalizeAgent is FinalizeAgent,SafeMathLib {
   function BonusFinalizeAgent(CrowdsaleToken _token, Crowdsale _crowdsale, uint[] _bonusBasePoints, address[] _teamAddresses) {
     token = _token;
     crowdsale = _crowdsale;
-    if(address(crowdsale) == 0) {
-      throw;
-    }
 
-    //bonus & team address array size doesn't match
-    if(_bonusBasePoints.length != _teamAddresses.length){
-      throw;
-    }
+    //crowdsale address must not be 0
+    require(address(crowdsale) != 0);
+
+    //bonus & team address array size must match
+    require(_bonusBasePoints.length == _teamAddresses.length);
 
     totalMembers = _teamAddresses.length;
     teamAddresses = _teamAddresses;
@@ -43,13 +41,15 @@ contract BonusFinalizeAgent is FinalizeAgent,SafeMathLib {
     //if any of the bonus is 0 throw
     // otherwise sum it up in totalAllocatedBonus
     for (uint i=0;i<totalMembers;i++){
-      if(_bonusBasePoints[i] == 0) throw;
+      require(_bonusBasePoints[i] != 0);
+      //if(_bonusBasePoints[i] == 0) throw;
     }
 
     //if any of the address is 0 or invalid throw
     //otherwise initialize the bonusOf array
     for (uint j=0;j<totalMembers;j++){
-      if(_teamAddresses[j] == 0) throw;
+      require(_teamAddresses[j] != 0);
+      //if(_teamAddresses[j] == 0) throw;
       bonusOf[_teamAddresses[j]] = _bonusBasePoints[j];
     }
   }
@@ -64,15 +64,17 @@ contract BonusFinalizeAgent is FinalizeAgent,SafeMathLib {
 
     // if finalized is not being called from the crowdsale 
     // contract then throw
-    if(msg.sender != address(crowdsale)) {
-      throw;
-    }
+    require(msg.sender == address(crowdsale));
+
+    // if(msg.sender != address(crowdsale)) {
+    //   throw;
+    // }
 
     // get the total sold tokens count.
     uint tokensSold = crowdsale.tokensSold();
 
     for (uint i=0;i<totalMembers;i++){
-      allocatedBonus = safeMul(tokensSold,bonusOf[teamAddresses[i]]) / 10000;
+      allocatedBonus = safeMul(tokensSold, bonusOf[teamAddresses[i]]) / 10000;
       // move tokens to the team multisig wallet
       token.mint(teamAddresses[i], allocatedBonus);
     }

@@ -1,7 +1,6 @@
 pragma solidity ^0.4.11;
 
 contract SafeMathLib {
-
   function safeMul(uint a, uint b) returns (uint) {
     uint c = a * b;
     assert(a == 0 || c / a == b);
@@ -17,9 +16,5 @@ contract SafeMathLib {
     uint c = a + b;
     assert(c>=a);
     return c;
-  }
-
-  function assert(bool assertion) private {
-    if (!assertion) throw;
   }
 }

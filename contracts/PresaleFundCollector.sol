@@ -50,14 +50,16 @@ contract PresaleFundCollector is Ownable, SafeMathLib {
     owner = _owner;
 
     // Give argument
-    if(_freezeEndsAt == 0) {
-      throw;
-    }
+    require(_freezeEndsAt != 0);
+    // if(_freezeEndsAt == 0) {
+    //   throw;
+    // }
 
     // Give argument
-    if(_weiMinimumLimit == 0) {
-      throw;
-    }
+    require(_weiMinimumLimit != 0);
+    // if(_weiMinimumLimit == 0) {
+    //   throw;
+    // }
 
     weiMinimumLimit = _weiMinimumLimit;
     freezeEndsAt = _freezeEndsAt;
@@ -69,7 +71,8 @@ contract PresaleFundCollector is Ownable, SafeMathLib {
   function invest() public payable {
 
     // Cannot invest anymore through crowdsale when moving has begun
-    if(moving) throw;
+    require(!moving);
+    //if(moving) throw;
 
     address investor = msg.sender;
 
@@ -78,15 +81,17 @@ contract PresaleFundCollector is Ownable, SafeMathLib {
     balances[investor] = safeAdd(balances[investor],msg.value);
 
     // Need to fulfill minimum limit
-    if(balances[investor] < weiMinimumLimit) {
-      throw;
-    }
+    require(balances[investor] >= weiMinimumLimit);
+    // if(balances[investor] < weiMinimumLimit) {
+    //   throw;
+    // }
 
     // This is a new investor
     if(!existing) {
 
       // Limit number of investors to prevent too long loops
-      if(investorCount >= MAX_INVESTORS) throw;
+      require(investorCount < MAX_INVESTORS);
+      //if(investorCount >= MAX_INVESTORS) throw;
 
       investors.push(investor);
       investorCount++;
@@ -101,7 +106,8 @@ contract PresaleFundCollector is Ownable, SafeMathLib {
   function parcipateCrowdsaleInvestor(address investor) public {
 
     // Crowdsale not yet set
-    if(address(crowdsale) == 0) throw;
+    require(address(crowdsale) != 0);
+    //if(address(crowdsale) == 0) throw;
 
     moving = true;
 
@@ -131,13 +137,15 @@ contract PresaleFundCollector is Ownable, SafeMathLib {
   function refund() {
 
     // Trying to ask refund too soon
-    if(now < freezeEndsAt) throw;
+    require(now >= freezeEndsAt);
+    //if(now < freezeEndsAt) throw;
 
     // We have started to move funds
     moving = true;
 
     address investor = msg.sender;
-    if(balances[investor] == 0) throw;
+    require(balances[investor] != 0);
+    //if(balances[investor] == 0) throw;
     uint amount = balances[investor];
     delete balances[investor];
     if(!investor.send(amount)) throw;
