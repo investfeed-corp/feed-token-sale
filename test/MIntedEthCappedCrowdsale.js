@@ -269,7 +269,7 @@ contract('MintedEthCappedCrowdsale: Success Scenario', function(accounts) {
     });
 
 
-    it('Funding: Open contribution must succeed', async function() {
+    it('Funding: Open contribution using buy must succeed', async function() {
         await tokenInstance.setMintAgent(crowdsaleInstance.address, true);
         await tokenInstance.setMintAgent(finalizeAgentInstance.address, true);
         await tokenInstance.setReleaseAgent(finalizeAgentInstance.address);
@@ -290,6 +290,54 @@ contract('MintedEthCappedCrowdsale: Success Scenario', function(accounts) {
         assert.equal(web3.eth.getBalance(multisigWalletInstance.address), web3.toWei('12', 'ether'));
 
         await crowdsaleInstance.buy({ from: accounts[4], value: web3.toWei('0.001', 'ether') });
+        assert.equal(await tokenInstance.balanceOf(accounts[4]), Math.floor(tokenInSmallestUnit(1.1, _tokenDecimals)));
+        assert.equal(web3.eth.getBalance(multisigWalletInstance.address), web3.toWei('12.001', 'ether'));
+    });
+
+    it('Funding: Open contribution using buyWithCustomerId must succeed', async function() {
+        await tokenInstance.setMintAgent(crowdsaleInstance.address, true);
+        await tokenInstance.setMintAgent(finalizeAgentInstance.address, true);
+        await tokenInstance.setReleaseAgent(finalizeAgentInstance.address);
+        await tokenInstance.setTransferAgent(crowdsaleInstance.address, true);
+        await crowdsaleInstance.setFinalizeAgent(finalizeAgentInstance.address);
+        assert.equal(await crowdsaleInstance.isFinalizerSane(), true, "Finalizer not sane. Can't continue.");
+        assert.equal(await crowdsaleInstance.isPricingSane(), true, "Pricing not sane. Can't continue.");
+
+        await timer(_countdownInSeconds);
+
+        await crowdsaleInstance.buyWithCustomerId(3, { from: accounts[3], value: web3.toWei('2', 'ether') });
+        assert.equal(await tokenInstance.balanceOf(accounts[3]), tokenInSmallestUnit(3000, _tokenDecimals));
+        assert.equal(web3.eth.getBalance(multisigWalletInstance.address), web3.toWei('2', 'ether'));
+
+
+        await crowdsaleInstance.buyWithCustomerId(5, { from: accounts[5], value: web3.toWei('10', 'ether') });
+        assert.equal(await tokenInstance.balanceOf(accounts[5]), tokenInSmallestUnit(15000, _tokenDecimals));
+        assert.equal(web3.eth.getBalance(multisigWalletInstance.address), web3.toWei('12', 'ether'));
+
+        await crowdsaleInstance.buyWithCustomerId(4, { from: accounts[4], value: web3.toWei('0.001', 'ether') });
+        assert.equal(await tokenInstance.balanceOf(accounts[4]), Math.floor(tokenInSmallestUnit(1.1, _tokenDecimals)));
+        assert.equal(web3.eth.getBalance(multisigWalletInstance.address), web3.toWei('12.001', 'ether'));
+    });
+
+    it('Funding: Open contribution using investWithCustomerId must succeed', async function() {
+        await tokenInstance.setMintAgent(crowdsaleInstance.address, true);
+        await tokenInstance.setMintAgent(finalizeAgentInstance.address, true);
+        await tokenInstance.setReleaseAgent(finalizeAgentInstance.address);
+        await tokenInstance.setTransferAgent(crowdsaleInstance.address, true);
+        await crowdsaleInstance.setFinalizeAgent(finalizeAgentInstance.address);
+        assert.equal(await crowdsaleInstance.isFinalizerSane(), true, "Finalizer not sane. Can't continue.");
+        assert.equal(await crowdsaleInstance.isPricingSane(), true, "Pricing not sane. Can't continue.");
+
+        await timer(_countdownInSeconds);
+
+        await crowdsaleInstance.investWithCustomerId(accounts[3], 3, { from: accounts[3], value: web3.toWei('2', 'ether') });
+        assert.equal(await tokenInstance.balanceOf(accounts[3]), tokenInSmallestUnit(3000, _tokenDecimals));
+        assert.equal(web3.eth.getBalance(multisigWalletInstance.address), web3.toWei('2', 'ether'));
+
+        await crowdsaleInstance.investWithCustomerId(accounts[5], 5, { from: accounts[5], value: web3.toWei('10', 'ether') });
+        assert.equal(await tokenInstance.balanceOf(accounts[5]), tokenInSmallestUnit(15000, _tokenDecimals));
+        assert.equal(web3.eth.getBalance(multisigWalletInstance.address), web3.toWei('12', 'ether'));
+        await crowdsaleInstance.investWithCustomerId(accounts[4], 4, { from: accounts[4], value: web3.toWei('0.001', 'ether') });
         assert.equal(await tokenInstance.balanceOf(accounts[4]), Math.floor(tokenInSmallestUnit(1.1, _tokenDecimals)));
         assert.equal(web3.eth.getBalance(multisigWalletInstance.address), web3.toWei('12.001', 'ether'));
     });

@@ -1,7 +1,7 @@
 var Token = artifacts.require("./CrowdsaleToken.sol");
 var PricingStartegy = artifacts.require("./EthTranchePricing.sol");
 //var MultisigWallet = artifacts.require("./MultisigWalletConsenSys.sol");
-var MultisigWallet = artifacts.require("./MultisigWallet.sol");
+var MultiSigWallet = artifacts.require("./MultiSigWallet.sol");
 var Crowdsale = artifacts.require("./MintedTokenCappedCrowdsale.sol");
 var FinalizeAgent = artifacts.require("./BonusFinalizeAgent.sol");
 
@@ -125,7 +125,7 @@ module.exports = function(deployer, network, accounts) {
      * and the minimum approvals required to approve the transactions.
      */
     var _minRequired = 2;
-    var _dayLimit = 2;
+
     var _listOfOwners;
     if (network == "testrpc") {
         _listOfOwners = [accounts[1], accounts[2], accounts[3]];
@@ -186,12 +186,12 @@ module.exports = function(deployer, network, accounts) {
         if (showABI) console.log("EthTranchePricing ABI is: ", JSON.stringify(pricingInstance.abi));
         if (debug) console.log("===============================================");
         if (debug) console.log("\n\n");
-        if (debug) console.log("*************  Deploying MultisigWallet by Zeppelin  ************** \n");
-        return MultisigWallet.new(_listOfOwners, _minRequired, _dayLimit);
+        if (debug) console.log("*************  Deploying MultiSigWallet by Zeppelin  ************** \n");
+        return MultiSigWallet.new(_listOfOwners, _minRequired);
     }).then(function(Instance) {
         multisigWalletInstance = Instance;
         if (debug) console.log("MultiSigWallet Parameters are:");
-        if (debug) console.log(_listOfOwners, _minRequired, _dayLimit);
+        if (debug) console.log(_listOfOwners, _minRequired);
         if (debug) console.log("MultiSigWallet address is: ", multisigWalletInstance.address);
         if (showURL) console.log("Wallet URL is: " + getEtherScanUrl(network, multisigWalletInstance.address, "address"));
         if (showURL) console.log("Transaction URL is: " + getEtherScanUrl(network, multisigWalletInstance.transactionHash, "tx"));
